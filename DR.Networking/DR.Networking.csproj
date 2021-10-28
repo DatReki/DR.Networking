@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<None Include="README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Nager.PublicSuffix" Version="2.2.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
