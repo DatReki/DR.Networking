@@ -82,7 +82,7 @@ class Program
 ```
 
 ### Return values
-1. <strong>result</strong>: Boolean which indicates if the request passed or failed.
-2. <strong>errorCode</strong>: A string containing the error message in case the request fails.
-3. <strong>content</strong>: HttpContent containing the content returned by the request.
-4. <strong>headers</strong>: HttpResponseHeaders containing the headers returned by the request.
+1. **result**: Boolean which indicates if the request passed or failed.
+2. **errorCode**: A string containing the error message in case the request fails.
+3. **content**: HttpContent containing the content returned by the request.
+4. **headers**: HttpResponseHeaders containing the headers returned by the request.
