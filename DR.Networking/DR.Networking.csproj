@@ -8,6 +8,8 @@
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageTags>http https IPv4 DNS networking request get post</PackageTags>
+	<RepositoryType>git</RepositoryType>
+	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

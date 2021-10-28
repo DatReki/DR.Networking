@@ -1,5 +1,8 @@
 # DR.Networking
 
+<a href="https://github.com/DatReki/DR.Networking/actions/workflows/dotnet.yml">
+    <img src="https://github.com/DatReki/DR.Networking/actions/workflows/dotnet.yml/badge.svg" />
+</a>
 <a href="https://www.paypal.com/donate?hosted_button_id=WRETYRRSJ4T2L">
     <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?style=flat-square">
 </a>
