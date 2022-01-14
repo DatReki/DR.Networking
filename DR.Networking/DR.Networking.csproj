@@ -5,11 +5,12 @@
     <Authors>DatReki</Authors>
     <Description>A small networking library to make get &amp; post requests</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed readme and set to release mode (seems I was targeting wrong project before)</PackageReleaseNotes>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageTags>http https IPv4 DNS networking request get post</PackageTags>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
+	<Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
