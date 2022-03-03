@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DR.Networking.Core.Extensions;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -8,9 +9,9 @@ namespace DR.Networking
 {
 	public class Request
 	{
-		private static HttpClient Client = new HttpClient();
-		private static HttpContent content { get; set; }
-		private static HttpResponseHeaders headers { get; set; }
+		private static HttpClient s_client = new HttpClient();
+		private static HttpContent s_content { get; set; }
+		private static HttpResponseHeaders s_headers { get; set; }
 
 		/// <summary>Make a get request to a address</summary>
 		/// <param name="url">The url (either DNS or IPv4) that you want to make a get request too</param>
@@ -36,21 +37,21 @@ namespace DR.Networking
 			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
 			if (checkUrl.result)
 			{
-				HttpResponseMessage response = await Client.GetAsync(requestUrl);
-				content = response.Content;
-				headers = response.Headers;
+				HttpResponseMessage response = await s_client.GetAsync(requestUrl);
+				s_content = response.Content;
+				s_headers = response.Headers;
 				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
 				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
+					return (false, string.Format(Core.Base.s_errorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), s_content, s_headers);
 				}
 				else
 				{
-					return (true, null, content, headers);
+					return (true, null, s_content, s_headers);
 				}
 			}
 			else
 			{
-				return (false, checkUrl.error, content, headers);
+				return (false, checkUrl.error, s_content, s_headers);
 			}
 		}
 
@@ -90,21 +91,21 @@ namespace DR.Networking
 			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
 			if (checkUrl.result)
 			{
-				HttpResponseMessage response = await Client.PostAsync(requestUrl, post);
-				content = response.Content;
-				headers = response.Headers;
+				HttpResponseMessage response = await s_client.PostAsync(requestUrl, post);
+				s_content = response.Content;
+				s_headers = response.Headers;
 				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
 				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
+					return (false, string.Format(Core.Base.s_errorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), s_content, s_headers);
 				}
 				else
 				{
-					return (true, null, content, headers);
+					return (true, null, s_content, s_headers);
 				}
 			}
 			else
 			{
-				return (false, checkUrl.error, content, headers);
+				return (false, checkUrl.error, s_content, s_headers);
 			}
 		}
 
@@ -146,21 +147,21 @@ namespace DR.Networking
 			if (checkUrl.result)
 			{
 				var data = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(post), Encoding.UTF8, "application/json");
-				HttpResponseMessage response = await Client.PostAsync(requestUrl, data);
-				content = response.Content;
-				headers = response.Headers;
+				HttpResponseMessage response = await s_client.PostAsync(requestUrl, data);
+				s_content = response.Content;
+				s_headers = response.Headers;
 				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
 				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
+					return (false, string.Format(Core.Base.s_errorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), s_content, s_headers);
 				}
 				else
 				{
-					return (true, null, content, headers);
+					return (true, null, s_content, s_headers);
 				}
 			}
 			else
 			{
-				return (false, checkUrl.error, content, headers);
+				return (false, checkUrl.error, s_content, s_headers);
 			}
 		}
 	}

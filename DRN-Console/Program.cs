@@ -23,6 +23,19 @@ namespace DRN_Console
 
 		static void Main(string[] args)
 		{
+			TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
+			List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new List<DR.Networking.Configuration.SiteSpecific>()
+            {
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "test" },
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com" },
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/test" },
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/hallo/yolo.png" },
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/hi?testing#one" },
+				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "https://images.unsplash.com/photo-1453728013993-6d66e9c9123a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8dmlld3xlbnwwfHwwfHw%3D&w=1000&q=80" }
+            };
+
+			DR.Networking.Configuration configuration = new DR.Networking.Configuration(globalRateLimit, rateLimitings);
+			return;
 			List<string> requestTypes = new() { "get", "post-encoded", "post-dynamic" };
 
 			Console.WriteLine($"Select what type of request you want to make.\nYou can choose:");

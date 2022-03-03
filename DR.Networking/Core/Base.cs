@@ -3,17 +3,48 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using static DR.Networking.Core.Errors;
+using static DR.Networking.Configuration;
+using DR.Networking.Core.Extensions;
+using System.Threading;
 
 namespace DR.Networking.Core
 {
 	public class Base
 	{
-		internal static string ErrorLayout = $"[{DateTime.UtcNow}] " + "[DR.Networking] [{0}] Error: {1}";
+		internal enum UrlType
+        {
+			Page,
+			Domain
+        }
+
+		enum Protocol
+		{
+			Https,
+			Http
+		}
+
+		internal static string s_errorLayout = $"[{DateTime.UtcNow}] " + "[DR.Networking] [{0}] Error: {1}";
 
 		/// <summary>
 		/// Creates a well formed uri
 		/// </summary>
-		internal static (bool result, string error) CheckUrl(string url, out Uri newUrl)
+		/// <param name="url">Url you want to parse into a Uri</param>
+		/// <param name="newUrl">New Uri which the URL was converted into</param>
+		/// <param name="updateSiteSpecificList">(Optional) Indicate if the call was made by the UpdateSiteSpecificList method (tue for yes false for no)</param>
+		/// <returns>
+		///		<list type="number">
+		///			<item>
+		///				<para>Bool indicating if Uri conversion was successful</para>
+		///			</item>
+		///			<item>
+		///				<para>String containing the error if one occured</para>
+		///			</item>
+		///		</list>
+		/// </returns>
+		/// <exception cref="GenericInvalidUrlError"></exception>
+		/// <exception cref="Exception"></exception>
+		internal static (bool result, string error) CheckUrl(string url, out Uri newUrl, bool updateSiteSpecificList = false)
 		{
 			newUrl = null;
 			if (IPAddress.TryParse(url, out IPAddress address))
@@ -29,9 +60,9 @@ namespace DR.Networking.Core
 						}
 						break;
 					case System.Net.Sockets.AddressFamily.InterNetworkV6: //IPv6
-						return (false, string.Format(ErrorLayout, address, $"{string.Format(error, "address")} (IPv6)"));
+						return (false, string.Format(s_errorLayout, address, $"{string.Format(error, "address")} (IPv6)"));
 					default:
-						return (false, string.Format(ErrorLayout, address, string.Format(error, "address")));
+						return (false, string.Format(s_errorLayout, address, string.Format(error, "address")));
 				}
 			}
 			else
@@ -39,40 +70,56 @@ namespace DR.Networking.Core
 				if (Uri.TryCreate(CheckHttpProtocol(url), UriKind.RelativeOrAbsolute, out newUrl))
 				{
 					DomainParser domainParser = new DomainParser(new WebTldRuleProvider());
-					DomainInfo domainName = domainParser.Parse(newUrl.Host);
+					DomainInfo domainName = null;
+					try
+                    {
+						domainName = domainParser.Parse(newUrl.Host);
+					}
+					catch (Exception ex)
+                    {
+						if (ex is ParseException)
+                        {
+							if (updateSiteSpecificList)
+								throw new GenericInvalidUrlError($"The URL you provided isn't valid.\n" +
+									$"Make sure all the URLs you provided in your 'DR.Networking.Configuration' are valid.\n" +
+									$"Url: {url}");
+							return (false, string.Format(s_errorLayout, url, "The url you provided isn't valid"));
+						}
+						else
+                        {
+							throw new Exception($"Something went wrong while parsing your URL.\nUrl: {newUrl}\nError: {ex}");
+						}						
+                    }
 
 					if (domainName.TLD.Length > 0)
 					{
 						try
 						{
-							//See if "url" has a valid host entry
+							//See if "URL" has a valid host entry
 							Dns.GetHostEntry(domainName.RegistrableDomain);
 							return (true, null);
 						}
 						catch
 						{
-							return (false, string.Format(ErrorLayout, url, "Url does not have a valid host entry"));
+							return (false, string.Format(s_errorLayout, url, "Url does not have a valid host entry"));
 						}
 					}
-					return (false, string.Format(ErrorLayout, url, "The provided url does not have a valid top level domain"));
+					return (false, string.Format(s_errorLayout, url, "The provided URL does not have a valid top level domain"));
 				}
 				else
 				{
-					return (false, string.Format(ErrorLayout, address, $"The provided url/address isn't supported"));
+					return (false, string.Format(s_errorLayout, address, $"The provided URL/address isn't supported"));
 				}
 			}
 			return (false, null);
 		}
 
-		private enum Protocol
-		{
-			Https,
-			Http
-		}
-
 		/// <summary>
-		/// Adds the http protocol to a url
+		/// Adds the http protocol to a URL
 		/// </summary>
+		/// <param name="url">The url for which you want to check the Http protocol</param>
+		/// <param name="protocol">(Optional) What Http protocol was used for the request</param>
+		/// <returns></returns>
 		private static string CheckHttpProtocol(string url, Protocol? protocol = null)
 		{
 			string newUri;
@@ -101,6 +148,11 @@ namespace DR.Networking.Core
 		/// <summary>
 		/// Returns an error message when a bad status code is encountered
 		/// </summary>
+		/// <param name="code">The HttpStatusCode of the request made</param>
+		/// <param name="errorMsg">The error message associated with the HttpStatusCode. Null if HttpStatusCode indicates request was successful</param>
+		/// <returns>
+		///		A bool indicating if http request was successful
+		/// </returns>
 		internal static bool ResponseStatusMessage(HttpStatusCode code, out string errorMsg)
 		{
 			//Return an explanation message with HTTP status codes so it's more clear what went wrong.
@@ -239,5 +291,43 @@ namespace DR.Networking.Core
 					return true;
 			}
 		}
-	}
+
+		/// <summary>
+		/// Updates the SiteSpecificList. Checks wether the specified urls are for a page or a domain.
+		/// </summary>
+		/// <param name="siteList"></param>
+		/// <returns>Updated List</returns>
+		/// <exception cref="RateLimitingUrlNotValid"></exception>
+		internal static List<SiteSpecific> UpdateSiteSpecificList(List<SiteSpecific> siteList)
+		{
+			foreach (SiteSpecific item in siteList)
+            {
+				if (CheckUrl(item.Url, out Uri url, true).result)
+                {
+					UrlType urlType;
+					switch (url.AbsolutePath)
+                    {
+						case "/":
+							urlType = UrlType.Domain;
+							break;
+						default:
+							urlType = UrlType.Page;
+							break;
+                    }
+					item._urlType = urlType;
+					item._uri = url;
+				}
+				else
+                {
+					throw new RateLimitingUrlNotValid($"One of the urls you provided for domain/url specific rate limiting is not a valid url: {item.Url}");
+                }
+            }
+			return siteList;
+		}
+
+		internal static void RateLimit(Uri requestUrl, Action method)
+        {
+			(bool, RequestData, UrlType?) item = s_requestCollection.FindUri(requestUrl);
+		}
+    }
 }
