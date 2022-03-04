@@ -7,6 +7,7 @@ using static DR.Networking.Core.Errors;
 using static DR.Networking.Configuration;
 using DR.Networking.Core.Extensions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DR.Networking.Core
 {
@@ -325,9 +326,37 @@ namespace DR.Networking.Core
 			return siteList;
 		}
 
-		internal static void RateLimit(Uri requestUrl, Action method)
+		internal static Task RateLimit(Uri requestUrl, Type type, string methodName, params object[] args)
         {
-			(bool, RequestData, UrlType?) item = s_requestCollection.FindUri(requestUrl);
+			(bool result, SiteSpecific item, UrlType? type) getRateLimitSettings = SiteSpecificList.FindUri(requestUrl);
+			(bool result, RequestData request, UrlType? type) getPreviousRequest = s_requestCollection.FindUri(requestUrl);
+			if (getRateLimitSettings.result)
+            {
+				if (getPreviousRequest.result)
+                {
+					double remainingDifference = (DateTime.UtcNow - getPreviousRequest.request._time).TotalMilliseconds;
+					double originalRateLimitTime = getRateLimitSettings.item.RateLimit.TotalMilliseconds;
+
+					Task.Delay((int)originalRateLimitTime);
+					type.GetMethod("add").Invoke(null, args);
+				}
+
+				//
+			}
+			else
+            {
+				if (Configuration.RateLimit != null)
+                {
+
+                }
+            }
+			return Task.CompletedTask;
 		}
-    }
+
+		private static List<double> GetTotalMilliseconds()
+        {
+			return new List<double>();
+        }
+
+	}
 }

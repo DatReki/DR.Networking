@@ -24,10 +24,12 @@ namespace DR.Networking
         }
 
         //Global rate limit cool down
-        public static TimeSpan RateLimit { get; set; }
+        public static TimeSpan? RateLimit { get; set; }
 
+#nullable enable
         //Rate limit based on individual domains/urls
-        public static List<SiteSpecific> SiteSpecificList { get; set; }
+        public static List<SiteSpecific>? SiteSpecificList { get; set; }
+#nullable disable
 
         internal static ObservableCollection<RequestData> s_requestCollection = new ObservableCollection<RequestData>();
 
