@@ -10,12 +10,12 @@ namespace DR.Networking
 {
     public class Configuration
     {
-        public Configuration(TimeSpan rateLimit, List<SiteSpecific> siteSpecificRateLimit = null)
+        public Configuration(TimeSpan rateLimit, List<SiteSpecific> perSite = null)
         {
-            RateLimit = rateLimit;
-            if (siteSpecificRateLimit != null)
-                SiteSpecificList = siteSpecificRateLimit;
-            Core.Base.UpdateSiteSpecificList(SiteSpecificList);
+            Global = rateLimit;
+            if (perSite != null)
+                PerSite = perSite;
+            Core.Base.UpdateSiteSpecificList(PerSite);
         }
 
         static Configuration()
@@ -24,11 +24,11 @@ namespace DR.Networking
         }
 
         //Global rate limit cool down
-        public static TimeSpan? RateLimit { get; set; }
+        public static TimeSpan? Global { get; set; }
 
 #nullable enable
         //Rate limit based on individual domains/urls
-        public static List<SiteSpecific>? SiteSpecificList { get; set; }
+        public static List<SiteSpecific>? PerSite { get; set; }
 #nullable disable
 
         internal static ObservableCollection<RequestData> s_requestCollection = new ObservableCollection<RequestData>();
@@ -36,7 +36,7 @@ namespace DR.Networking
         public partial class SiteSpecific
         {
             public string Url { get; set; }
-            public TimeSpan RateLimit { get; set; }
+            public TimeSpan Duration { get; set; }
             internal Core.Base.UrlType? _urlType { get; set; }
             internal Uri _uri { get; set; }
         }
@@ -59,12 +59,10 @@ namespace DR.Networking
             {
                 RequestData item = s_requestCollection[i];
 
-                Console.WriteLine($"\nRequestCollectionChanged\nUrl: {item._url}\nTime: {item._time}\n\n");
-
-                (bool result, SiteSpecific item, Core.Base.UrlType? type) found = SiteSpecificList.FindUri(item._url);
+                (bool result, SiteSpecific item) found = PerSite.FindUri(item._url);
                 if (found.result)
                 {
-                    RequestCollectionRemove(found.item.RateLimit, (Core.Base.UrlType)found.type, item);
+                    RequestCollectionRemove(found.item.Duration, (Core.Base.UrlType)found.item._urlType, item);
                 }
                 else
                 {
@@ -82,10 +80,10 @@ namespace DR.Networking
         private static void RequestCollectionRemove(TimeSpan rateLimit, Core.Base.UrlType type, RequestData item)
         {
             bool check = (DateTime.UtcNow - item._time) > rateLimit;
-            Console.WriteLine($"Current time: {DateTime.UtcNow}\n" +
-                $"Request was made at: {item._time}\n" +
-                $"Timespan for ratelimit is: {rateLimit}\n" +
-                $"Check: {check}");
+            //Console.WriteLine($"Current time: {DateTime.UtcNow}\n" +
+            //    $"Request was made at: {item._time}\n" +
+            //    $"Timespan for ratelimit is: {rateLimit}\n" +
+            //    $"Check: {check}");
 
             if (check)
             {

@@ -71,8 +71,8 @@ namespace DR.Networking.Core
 				if (Uri.TryCreate(CheckHttpProtocol(url), UriKind.RelativeOrAbsolute, out newUrl))
 				{
 					DomainParser domainParser = new DomainParser(new WebTldRuleProvider());
-					DomainInfo domainName = null;
-					try
+                    DomainInfo domainName;
+                    try
                     {
 						domainName = domainParser.Parse(newUrl.Host);
 					}
@@ -294,7 +294,7 @@ namespace DR.Networking.Core
 		}
 
 		/// <summary>
-		/// Updates the SiteSpecificList. Checks wether the specified urls are for a page or a domain.
+		/// Updates the siteList. Checks wether the specified urls are for a page or a domain.
 		/// </summary>
 		/// <param name="siteList"></param>
 		/// <returns>Updated List</returns>
@@ -326,37 +326,79 @@ namespace DR.Networking.Core
 			return siteList;
 		}
 
-		internal static Task RateLimit(Uri requestUrl, Type type, string methodName, params object[] args)
+		internal static async Task RateLimit(Uri requestUrl)
         {
-			(bool result, SiteSpecific item, UrlType? type) getRateLimitSettings = SiteSpecificList.FindUri(requestUrl);
-			(bool result, RequestData request, UrlType? type) getPreviousRequest = s_requestCollection.FindUri(requestUrl);
-			if (getRateLimitSettings.result)
+			if (PerSite != null)
             {
-				if (getPreviousRequest.result)
-                {
-					double remainingDifference = (DateTime.UtcNow - getPreviousRequest.request._time).TotalMilliseconds;
-					double originalRateLimitTime = getRateLimitSettings.item.RateLimit.TotalMilliseconds;
+				Type type = typeof(Request);
+				(bool result, SiteSpecific item) getSite = PerSite.FindUri(requestUrl);
+				(bool result, RequestData request, UrlType? type) getRequest = s_requestCollection.FindUri(requestUrl);
 
-					Task.Delay((int)originalRateLimitTime);
-					type.GetMethod("add").Invoke(null, args);
+				if (getSite.result)
+				{
+					if (getRequest.result)
+					{
+						await RateLimit(getSite.item.Duration.TotalMilliseconds, getRequest.request._time, true, requestUrl);
+					}
+
+					await UpdateCollection(requestUrl);
+					Console.WriteLine($"{getSite.item._uri} added to ratelimit collection");
 				}
+				else
+				{
+					if (Global != null)
+					{
+						if (getRequest.result)
+						{
+							await RateLimit(Global.Value.TotalMilliseconds, getRequest.request._time, false, requestUrl);
+						}
 
-				//
+						await UpdateCollection(requestUrl);
+						Console.WriteLine($"{requestUrl} added to ratelimit collection");
+					}
+				}
+			}
+		}
+
+		private static Task RateLimit(double duration, DateTime previousRequest, bool found, Uri temp)
+        {
+			double remainingDifference = 0;
+			double previousRequestDifference = (DateTime.UtcNow - previousRequest).TotalMilliseconds;
+			
+			if (duration > previousRequestDifference)
+				remainingDifference = duration - previousRequestDifference;
+			
+			Thread.Sleep((int)remainingDifference);
+
+			//temp
+			if (found)
+            {
+				Console.WriteLine($"{temp} previous found. Sleeping for {remainingDifference}ms/{TimeSpan.FromMilliseconds(remainingDifference).Seconds}s/{TimeSpan.FromMilliseconds(remainingDifference).Minutes}m");
 			}
 			else
             {
-				if (Configuration.RateLimit != null)
-                {
+				Console.WriteLine($"{temp} not found. Running global ratelimit. Sleeping for {remainingDifference}ms/{TimeSpan.FromMilliseconds(remainingDifference).Seconds}s/{TimeSpan.FromMilliseconds(remainingDifference).Minutes}m");
+			}
 
-                }
-            }
 			return Task.CompletedTask;
-		}
-
-		private static List<double> GetTotalMilliseconds()
-        {
-			return new List<double>();
         }
 
+		private static Task UpdateCollection(Uri uri)
+        {
+            (bool result, RequestData data, UrlType? type) result = s_requestCollection.FindUri(uri);
+			if (result.Item1)
+            {
+				s_requestCollection.Remove(result.data);
+			}
+
+			RequestData responseData = new RequestData()
+			{
+				_time = DateTime.UtcNow,
+				_url = uri,
+			};
+			s_requestCollection.Add(responseData);
+
+			return Task.CompletedTask;
+		}
 	}
 }

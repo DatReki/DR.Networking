@@ -23,20 +23,7 @@ namespace DRN_Console
 
 		static void Main(string[] args)
 		{
-			TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
-			List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new List<DR.Networking.Configuration.SiteSpecific>()
-            {
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "test" },
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com" },
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/test" },
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/hallo/yolo.png" },
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "www.example.com/hi?testing#one" },
-				new DR.Networking.Configuration.SiteSpecific() { RateLimit = globalRateLimit, Url = "https://images.unsplash.com/photo-1453728013993-6d66e9c9123a?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8dmlld3xlbnwwfHwwfHw%3D&w=1000&q=80" }
-            };
-
-			DR.Networking.Configuration configuration = new DR.Networking.Configuration(globalRateLimit, rateLimitings);
-			return;
-			List<string> requestTypes = new() { "get", "post-encoded", "post-dynamic" };
+			List<string> requestTypes = new() { "get", "post-encoded", "post-dynamic", "get-ratelimited" };
 
 			Console.WriteLine($"Select what type of request you want to make.\nYou can choose:");
 			requestTypes.ForEach(x => Console.WriteLine(x));
@@ -45,35 +32,102 @@ namespace DRN_Console
 			{
 				if (input == requestTypes.ElementAt(0))
 				{
-					Console.WriteLine("Write an url that you want to make a get request to");
-					string url = Console.ReadLine();
-					(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
-					MakeRequest(result);
+					Get();
 				}
 				else if (input == requestTypes.ElementAt(1))
 				{
-					ConfigFile();
-					var content = new FormUrlEncodedContent(new[]
-					{
-						new KeyValuePair<string, string>("permission", "user"),
-						new KeyValuePair<string, string>("permission_description", "general-user-account")
-					});
-
-					(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, content).Result;
-					MakeRequest(result);
+					PostEncoded();
 				}
 				else if (input == requestTypes.ElementAt(2))
 				{
-					ConfigFile();
-					Permissions p = new Permissions { permission = "user", permission_description = "general-user-account" };
-
-					(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, p).Result;
-					MakeRequest(result);
+					PostDynamic();
 				}
+				else if (input == requestTypes.ElementAt(3))
+                {
+					GetRateLimited();
+                }
 			}
 			else
 			{
 				Restart(args);
+			}
+		}
+
+		static void Get()
+        {
+			Console.WriteLine("Write an url that you want to make a get request to");
+			string url = Console.ReadLine();
+			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
+			MakeRequest(result);
+		}
+
+		static void PostEncoded()
+        {
+			ConfigFile();
+			var content = new FormUrlEncodedContent(new[]
+			{
+						new KeyValuePair<string, string>("permission", "user"),
+						new KeyValuePair<string, string>("permission_description", "general-user-account")
+					});
+
+			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, content).Result;
+			MakeRequest(result);
+		}
+
+		static void PostDynamic()
+        {
+			ConfigFile();
+			Permissions p = new Permissions { permission = "user", permission_description = "general-user-account" };
+
+			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, p).Result;
+			MakeRequest(result);
+		}
+
+		static void GetRateLimited()
+        {
+			TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
+			List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new List<DR.Networking.Configuration.SiteSpecific>()
+			{
+				new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(30), Url = "https://www.rockwellautomation.com/" },
+				new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "https://www.rockwellautomation.com/content/dam/rockwell-automation/sites/images/logos/2019_Logo_AllenBradley_rgb.svg" },
+				new DR.Networking.Configuration.SiteSpecific() { Duration = globalRateLimit, Url = "www.example.com" },
+			};
+
+			DR.Networking.Configuration configuration = new DR.Networking.Configuration(globalRateLimit, rateLimitings);
+
+			List<string> Urls = new List<string>()
+            {
+				/*
+				"www.google.com",
+				"www.cloudflare.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.hello.com",
+				"https://www.rockwellautomation.com/",
+				"https://www.rockwellautomation.com/",
+				"https://www.rockwellautomation.com/content/dam/rockwell-automation/sites/images/logos/2019_Logo_AllenBradley_rgb.svg",
+				"https://www.rockwellautomation.com/content/dam/rockwell-automation/sites/images/logos/2019_Logo_AllenBradley_rgb.svg"
+				*/
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com",
+				"www.example.com"
+			};
+			foreach (string url in Urls)
+            {
+				DateTime now = DateTime.UtcNow;
+
+				(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
+
+				DateTime end = DateTime.UtcNow;
+				Console.WriteLine($"Request url: {url}\nRequest status: {result.result}\nRequest start: {now}\nRequest end: {end}\nTime difference: {(end - now).TotalSeconds}\n\n\n\n");
 			}
 		}
 

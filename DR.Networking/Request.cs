@@ -37,6 +37,7 @@ namespace DR.Networking
 			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
 			if (checkUrl.result)
 			{
+				await Core.Base.RateLimit(requestUrl);
 				HttpResponseMessage response = await s_client.GetAsync(requestUrl);
 				s_content = response.Content;
 				s_headers = response.Headers;

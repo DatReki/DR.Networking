@@ -8,18 +8,24 @@ namespace DR.Networking.Core.Extensions
 {
     internal static class List
     {
-        public static (bool, SiteSpecific, Base.UrlType?) FindUri(this List<SiteSpecific> list, Uri target)
+        public static (bool, SiteSpecific) FindUri(this List<SiteSpecific> list, Uri target)
         {
-            SiteSpecific siteSpecific = list.Where(i => i._uri == target).First();
-            if (siteSpecific != null)
-                return (true, siteSpecific, Base.UrlType.Page);
+            SiteSpecific findPage = list.Find(e => e._uri == target);
+            if (findPage == null)
+            {
+                SiteSpecific findDomain = list.Find(r => r._uri.AbsoluteUri == target.AbsoluteUri);
+                if (findDomain == null)
+                {
+                    return (false, null);
+                }
+                else
+                {
+                    return (true, findDomain);
+                }
+            }
             else
             {
-                SiteSpecific domainSpecific = list.Where(i => i._uri.AbsolutePath == target.AbsolutePath).First();
-                if (domainSpecific != null)
-                    return (true, siteSpecific, Base.UrlType.Domain);
-                else
-                    return (false, null, null);
+                return (true, findPage);
             }
         }
     }

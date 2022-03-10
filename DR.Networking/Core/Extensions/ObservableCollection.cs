@@ -11,16 +11,22 @@ namespace DR.Networking.Core.Extensions
     {
         public static (bool, RequestData, Base.UrlType?) FindUri(this ObservableCollection<RequestData> list, Uri target)
         {
-            RequestData siteSpecific = list.Where(i => i._url == target).First();
-            if (siteSpecific != null)
-                return (true, siteSpecific, Base.UrlType.Page);
+            RequestData findPage = list.Where(e => e._url == target).FirstOrDefault();
+            if (findPage == null)
+            {
+                RequestData findDomain = list.Where(r => r._url.AbsoluteUri == target.AbsoluteUri).FirstOrDefault();
+                if (findDomain == null)
+                {
+                    return (false, null, null);
+                }
+                else
+                {
+                    return (true, findDomain, Base.UrlType.Domain);
+                }
+            }
             else
             {
-                RequestData domainSpecific = list.Where(i => i._url.AbsolutePath == target.AbsolutePath).First();
-                if (domainSpecific != null)
-                    return (true, siteSpecific, Base.UrlType.Domain);
-                else
-                    return (false, null, null);
+                return (true, findPage, Base.UrlType.Page);
             }
         }
     }
