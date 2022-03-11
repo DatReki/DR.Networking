@@ -328,10 +328,9 @@ namespace DR.Networking.Core
 
 		internal static async Task RateLimit(Uri requestUrl)
         {
-			if (PerSite != null)
+			if (PerSites != null)
             {
-				Type type = typeof(Request);
-				(bool result, SiteSpecific item) getSite = PerSite.FindUri(requestUrl);
+				(bool result, SiteSpecific item) getSite = PerSites.FindUri(requestUrl);
 				(bool result, RequestData request, UrlType? type) getRequest = s_requestCollection.FindUri(requestUrl);
 
 				if (getSite.result)
@@ -342,7 +341,6 @@ namespace DR.Networking.Core
 					}
 
 					await UpdateCollection(requestUrl);
-					Console.WriteLine($"{getSite.item._uri} added to ratelimit collection");
 				}
 				else
 				{
@@ -354,7 +352,6 @@ namespace DR.Networking.Core
 						}
 
 						await UpdateCollection(requestUrl);
-						Console.WriteLine($"{requestUrl} added to ratelimit collection");
 					}
 				}
 			}
@@ -370,23 +367,13 @@ namespace DR.Networking.Core
 			
 			Thread.Sleep((int)remainingDifference);
 
-			//temp
-			if (found)
-            {
-				Console.WriteLine($"{temp} previous found. Sleeping for {remainingDifference}ms/{TimeSpan.FromMilliseconds(remainingDifference).Seconds}s/{TimeSpan.FromMilliseconds(remainingDifference).Minutes}m");
-			}
-			else
-            {
-				Console.WriteLine($"{temp} not found. Running global ratelimit. Sleeping for {remainingDifference}ms/{TimeSpan.FromMilliseconds(remainingDifference).Seconds}s/{TimeSpan.FromMilliseconds(remainingDifference).Minutes}m");
-			}
-
 			return Task.CompletedTask;
         }
 
 		private static Task UpdateCollection(Uri uri)
         {
             (bool result, RequestData data, UrlType? type) result = s_requestCollection.FindUri(uri);
-			if (result.Item1)
+			if (result.result)
             {
 				s_requestCollection.Remove(result.data);
 			}

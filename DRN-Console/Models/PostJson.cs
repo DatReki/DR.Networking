@@ -1,22 +1,17 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DRN_Console
+namespace DRN_Console.Models
 {
-	public class Model
-	{
+    internal class PostJson
+    {
 		[DefaultValue("")]
 		public string PostUrl { get; set; }
 
-		public static Model GetCredExample()
+		public static PostJson GetCredExample()
 		{
-			return JsonConvert.DeserializeObject<Model>("{}", new JsonSerializerSettings()
+			return JsonConvert.DeserializeObject<PostJson>("{}", new JsonSerializerSettings()
 			{
 				DefaultValueHandling = DefaultValueHandling.Populate,
 				Converters = new JsonConverter[] { new StringEnumConverter() }

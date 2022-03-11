@@ -1,21 +1,24 @@
-﻿using DR.Networking.Core.Extensions;
-using System;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
+
+using DR.Networking.Core.Extensions;
 
 namespace DR.Networking
 {
     public class Configuration
     {
-        public Configuration(TimeSpan rateLimit, List<SiteSpecific> perSite = null)
+        public Configuration(TimeSpan? rateLimit = null, List<SiteSpecific> perSite = null)
         {
-            Global = rateLimit;
+            if (rateLimit != null)
+                Global = (TimeSpan)rateLimit;
             if (perSite != null)
-                PerSite = perSite;
-            Core.Base.UpdateSiteSpecificList(PerSite);
+            {
+                PerSites = perSite;
+                Core.Base.UpdateSiteSpecificList(PerSites);
+            }
         }
 
         static Configuration()
@@ -28,7 +31,7 @@ namespace DR.Networking
 
 #nullable enable
         //Rate limit based on individual domains/urls
-        public static List<SiteSpecific>? PerSite { get; set; }
+        public static List<SiteSpecific>? PerSites { get; set; }
 #nullable disable
 
         internal static ObservableCollection<RequestData> s_requestCollection = new ObservableCollection<RequestData>();
@@ -59,7 +62,7 @@ namespace DR.Networking
             {
                 RequestData item = s_requestCollection[i];
 
-                (bool result, SiteSpecific item) found = PerSite.FindUri(item._url);
+                (bool result, SiteSpecific item) found = PerSites.FindUri(item._url);
                 if (found.result)
                 {
                     RequestCollectionRemove(found.item.Duration, (Core.Base.UrlType)found.item._urlType, item);
@@ -80,11 +83,6 @@ namespace DR.Networking
         private static void RequestCollectionRemove(TimeSpan rateLimit, Core.Base.UrlType type, RequestData item)
         {
             bool check = (DateTime.UtcNow - item._time) > rateLimit;
-            //Console.WriteLine($"Current time: {DateTime.UtcNow}\n" +
-            //    $"Request was made at: {item._time}\n" +
-            //    $"Timespan for ratelimit is: {rateLimit}\n" +
-            //    $"Check: {check}");
-
             if (check)
             {
                 switch (type)

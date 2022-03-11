@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+
 using static DR.Networking.Configuration;
 
 namespace DR.Networking.Core.Extensions
 {
     internal static class List
     {
-        public static (bool, SiteSpecific) FindUri(this List<SiteSpecific> list, Uri target)
+        internal static (bool, SiteSpecific) FindUri(this List<SiteSpecific> list, Uri target)
         {
             SiteSpecific findPage = list.Find(e => e._uri == target);
             if (findPage == null)

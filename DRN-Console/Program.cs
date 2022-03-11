@@ -13,89 +13,173 @@ namespace DRN_Console
 {
 	class Program
 	{
-		public static Model Json { get; set; }
+		public static List<string> RequestTypes = new() { "get", "post-encoded", "post-dynamic" };
 
-		public partial class Permissions
-		{
-			public string permission { get; set; }
-			public string permission_description { get; set; }
-		}
+		public static string[] Args;
+
+		enum RequestType
+        {
+			RateLimiting,
+			Normal
+        }
 
 		static void Main(string[] args)
 		{
-			List<string> requestTypes = new() { "get", "post-encoded", "post-dynamic", "get-ratelimited" };
+			Args = args;
+			Console.WriteLine("Do you want to make requests with or without ratelimiting? (with/without)");
+			switch (Console.ReadLine())
+            {
+				case "with":
+					SelectRequest(args, RequestType.RateLimiting);
+					break;
+				case "without":
+					SelectRequest(args, RequestType.Normal);
+					break;
+				default:
+					Restart();
+					break;
+            }
+		}
 
+		static void SelectRequest(string[] args, RequestType type)
+        {
 			Console.WriteLine($"Select what type of request you want to make.\nYou can choose:");
-			requestTypes.ForEach(x => Console.WriteLine(x));
+			RequestTypes.ForEach(x => Console.WriteLine(x));
 			string input = Console.ReadLine().ToLower().Trim();
-			if (requestTypes.Contains(input))
+			if (RequestTypes.Contains(input))
 			{
-				if (input == requestTypes.ElementAt(0))
+				if (input == RequestTypes.ElementAt(0))
 				{
-					Get();
+					switch (type)
+                    {
+						case RequestType.Normal:
+							RunRequests.WithoutRateLimiting.Get();
+							break;
+						case RequestType.RateLimiting:
+							RunRequests.WithRateLimiting.Get();
+							break;
+                    }
 				}
-				else if (input == requestTypes.ElementAt(1))
+				else if (input == RequestTypes.ElementAt(1))
 				{
-					PostEncoded();
+					switch (type)
+					{
+						case RequestType.Normal:
+							RunRequests.WithoutRateLimiting.PostEncoded();
+							break;
+						case RequestType.RateLimiting:
+							RunRequests.WithRateLimiting.PostEncoded();
+							break;
+					}			
 				}
-				else if (input == requestTypes.ElementAt(2))
+				else if (input == RequestTypes.ElementAt(2))
 				{
-					PostDynamic();
+					switch (type)
+					{
+						case RequestType.Normal:
+							RunRequests.WithoutRateLimiting.PostDynamic();
+							break;
+						case RequestType.RateLimiting:
+							RunRequests.WithRateLimiting.PostDynamic();
+							break;
+					}		
 				}
-				else if (input == requestTypes.ElementAt(3))
-                {
-					GetRateLimited();
-                }
 			}
 			else
 			{
-				Restart(args);
+				Restart();
 			}
 		}
 
-		static void Get()
+		static void RequestsWithRateLimiting(string[] args)
         {
-			Console.WriteLine("Write an url that you want to make a get request to");
-			string url = Console.ReadLine();
-			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
-			MakeRequest(result);
-		}
 
-		static void PostEncoded()
-        {
-			ConfigFile();
-			var content = new FormUrlEncodedContent(new[]
+
+			/*
+			TimeSpan globalRateLimit = TimeSpan.MinValue;
+			List<DR.Networking.Configuration.SiteSpecific> siteRateLimits = new() { };
+
+			Console.WriteLine("Do you want a global rate limit? (yes/no)");
+			switch (Console.ReadLine())
+            {
+				case "yes":
+					Console.WriteLine("How many seconds do you want this rate limit to be?");
+					if (int.TryParse(Console.ReadLine(), out int result))
+						globalRateLimit = TimeSpan.FromSeconds(result);
+					else
+						Restart(args);
+					break;
+				case "no":
+					break;
+				default:
+					Restart(args);
+					break;
+			}
+
+			Console.WriteLine("Do you want to add site/url specific rate limits?");
+			switch (Console.ReadLine())
 			{
-						new KeyValuePair<string, string>("permission", "user"),
-						new KeyValuePair<string, string>("permission_description", "general-user-account")
-					});
+				case "yes":
 
-			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, content).Result;
-			MakeRequest(result);
-		}
+					Console.WriteLine("Enter 'done' when you're finished.");
 
-		static void PostDynamic()
-        {
-			ConfigFile();
-			Permissions p = new Permissions { permission = "user", permission_description = "general-user-account" };
+					bool inProgress = true;
+					string url = null;
+					int counter = 0;
 
-			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, p).Result;
-			MakeRequest(result);
+					while (inProgress)
+					{
+						if (counter % 2 == 0)
+						{
+							Console.WriteLine("Please enter the amount of seconds you want the ratelimit to last");
+							if (int.TryParse(Console.ReadLine(), out int result))
+								siteRateLimits.Add(
+									new DR.Networking.Configuration.SiteSpecific() { Url = url, Duration = TimeSpan.FromSeconds(result) });
+							else
+								Restart(args);
+						}
+						else
+                        {
+							Console.WriteLine("Please enter the url for the site/page that you want to add a rate limit for");
+							string answer = Console.ReadLine();
+							switch (answer)
+                            {
+								case "done":
+									inProgress = false;
+									break;
+								default:
+									url = answer;
+									break;
+                            }
+                        }
+						counter++;
+					}
+					break;
+				case "no":
+					break;
+				default:
+					Restart(args);
+					break;
+			}
+
+
+			if ()
+			*/
 		}
 
 		static void GetRateLimited()
         {
 			TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
-			List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new List<DR.Networking.Configuration.SiteSpecific>()
+			List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new()
 			{
 				new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(30), Url = "https://www.rockwellautomation.com/" },
 				new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "https://www.rockwellautomation.com/content/dam/rockwell-automation/sites/images/logos/2019_Logo_AllenBradley_rgb.svg" },
-				new DR.Networking.Configuration.SiteSpecific() { Duration = globalRateLimit, Url = "www.example.com" },
+				new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "www.example.com" },
 			};
 
-			DR.Networking.Configuration configuration = new DR.Networking.Configuration(globalRateLimit, rateLimitings);
+			DR.Networking.Configuration configuration = new(globalRateLimit, rateLimitings);
 
-			List<string> Urls = new List<string>()
+			List<string> Urls = new()
             {
 				/*
 				"www.google.com",
@@ -120,66 +204,38 @@ namespace DRN_Console
 				"www.example.com",
 				"www.example.com"
 			};
+			DateTime start = DateTime.UtcNow;
+
+			(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = new();
+			DateTime now;
+			DateTime end;
+
 			foreach (string url in Urls)
             {
-				DateTime now = DateTime.UtcNow;
+				now = DateTime.UtcNow;
 
-				(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
+				result = DR.Networking.Request.Get(url).Result;
 
-				DateTime end = DateTime.UtcNow;
+				end = DateTime.UtcNow;
 				Console.WriteLine($"Request url: {url}\nRequest status: {result.result}\nRequest start: {now}\nRequest end: {end}\nTime difference: {(end - now).TotalSeconds}\n\n\n\n");
 			}
+			DateTime finish = DateTime.UtcNow;
+
+			Console.WriteLine($"Request done. Expected around 90 seconds. Result: {(finish - start).TotalSeconds}s\n\n\n\n");
+			System.Threading.Thread.Sleep(20000);
+
+			now = DateTime.UtcNow;
+			result = DR.Networking.Request.Get("www.google.com").Result;
+			end = DateTime.UtcNow;
+
+			Console.WriteLine($"Request url: www.google.com\nRequest status: {result.result}\nRequest start: {now}\nRequest end: {end}\nTime difference: {(end - now).TotalSeconds}\n\n\n\n");
 		}
 
-		private static void Restart(string[] args)
+		public static void Restart()
 		{
 			Console.Clear();
 			Console.WriteLine($"You provided an incorrect choice please try again");
-			Main(args);
-		}
-
-		private static void MakeRequest((bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result)
-		{
-			if (result.result)
-			{
-				Console.WriteLine($"Headers:");
-				foreach (var header in result.headers)
-				{
-					Console.WriteLine($"	Key: {header.Key}");
-					Console.WriteLine($"	Value(s):");
-					foreach (var value in header.Value)
-					{
-						Console.WriteLine($"		{value}");
-					}
-				}
-				Console.WriteLine($"\n\n\n\nContent:\n{result.content.ReadAsStringAsync().Result}");
-			}
-			else
-			{
-				Console.WriteLine(result.errorCode);
-			}
-		}
-
-		private static void ConfigFile()
-		{
-			string directory = Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-			string file = Path.Combine(directory, "config.json");
-			Directory.CreateDirectory(directory);
-
-			bool configFileExits = File.Exists(file);
-			if (!configFileExits)
-			{
-				string json = JsonConvert.SerializeObject(Model.GetCredExample(), Formatting.Indented, new StringEnumConverter());
-				File.WriteAllText(file, json);
-			}
-
-			Json = JsonConvert.DeserializeObject<Model>(File.ReadAllText(file));
-
-			if (string.IsNullOrEmpty(Json.PostUrl))
-			{
-				Console.WriteLine($"Set your post url in {file}");
-				Environment.Exit(0);
-			}
+			Main(Args);
 		}
 	}
 }
