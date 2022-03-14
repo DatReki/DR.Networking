@@ -6,7 +6,7 @@ namespace DRN_Console.Models
 {
     internal class PostJson
     {
-		[DefaultValue("")]
+		[DefaultValue("https://ptsv2.com/")]
 		public string PostUrl { get; set; }
 
 		public static PostJson GetCredExample()

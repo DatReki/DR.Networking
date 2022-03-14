@@ -13,12 +13,18 @@ namespace DR.Networking.Core
 {
 	public class Base
 	{
+		/// <summary>
+		/// Indicates if Uri leads to a page or domain (google.com/hello or google.com/)
+		/// </summary>
 		internal enum UrlType
         {
 			Page,
 			Domain
         }
 
+		/// <summary>
+		/// Http protocols
+		/// </summary>
 		enum Protocol
 		{
 			Https,
