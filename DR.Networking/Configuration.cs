@@ -10,6 +10,11 @@ namespace DR.Networking
 {
     public class Configuration
     {
+        /// <summary>
+        /// A constructor to setup ratelimit settings
+        /// </summary>
+        /// <param name="rateLimit">TimeSpan value for the global ratelimit</param>
+        /// <param name="perSite">A list containing site/url specific ratelimits</param>
         public Configuration(TimeSpan? rateLimit = null, List<SiteSpecific> perSite = null)
         {
             if (rateLimit != null)
@@ -26,11 +31,15 @@ namespace DR.Networking
             s_requestCollection.CollectionChanged += RequestCollectionChanged;
         }
 
-        //Global rate limit cool down
+        /// <summary>
+        /// TimeSpan for the global ratelimit (if you make multiple calls to the same Uri how much time minimally needs to be between them)
+        /// </summary>
         public static TimeSpan? Global { get; set; }
 
 #nullable enable
-        //Rate limit based on individual domains/urls
+        /// <summary>
+        /// Set ratelimits for individual Uri's
+        /// </summary>
         public static List<SiteSpecific>? PerSites { get; set; }
 #nullable disable
 

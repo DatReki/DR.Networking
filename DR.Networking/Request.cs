@@ -1,9 +1,9 @@
-﻿using DR.Networking.Core.Extensions;
-using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System;
 using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
+
 
 namespace DR.Networking
 {

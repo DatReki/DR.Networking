@@ -1,13 +1,14 @@
-﻿using Nager.PublicSuffix;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Net;
-using System.Text;
-using static DR.Networking.Core.Errors;
-using static DR.Networking.Configuration;
-using DR.Networking.Core.Extensions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using Nager.PublicSuffix;
+
+using DR.Networking.Core.Extensions;
+using static DR.Networking.Core.Errors;
+using static DR.Networking.Configuration;
 
 namespace DR.Networking.Core
 {
@@ -332,6 +333,11 @@ namespace DR.Networking.Core
 			return siteList;
 		}
 
+		/// <summary>
+		/// Function that throttles network calls.
+		/// Specifically it throttles calls according to the settings applied in the Configuration class.
+		/// </summary>
+		/// <param name="requestUrl">Url to which a network called is being made</param>
 		internal static async Task RateLimit(Uri requestUrl)
         {
 			if (PerSites != null)
@@ -343,7 +349,7 @@ namespace DR.Networking.Core
 				{
 					if (getRequest.result)
 					{
-						await RateLimit(getSite.item.Duration.TotalMilliseconds, getRequest.request._time, true, requestUrl);
+						await RateLimit(getSite.item.Duration.TotalMilliseconds, getRequest.request._time);
 					}
 
 					await UpdateCollection(requestUrl);
@@ -354,7 +360,7 @@ namespace DR.Networking.Core
 					{
 						if (getRequest.result)
 						{
-							await RateLimit(Global.Value.TotalMilliseconds, getRequest.request._time, false, requestUrl);
+							await RateLimit(Global.Value.TotalMilliseconds, getRequest.request._time);
 						}
 
 						await UpdateCollection(requestUrl);
@@ -363,7 +369,13 @@ namespace DR.Networking.Core
 			}
 		}
 
-		private static Task RateLimit(double duration, DateTime previousRequest, bool found, Uri temp)
+		/// <summary>
+		/// Sleeps the current thread for a specific duration
+		/// </summary>
+		/// <param name="duration">The duration of the ratelimit (how much time there should be between calls)</param>
+		/// <param name="previousRequest">DateTime of the previous request</param>
+		/// <returns></returns>
+		private static Task RateLimit(double duration, DateTime previousRequest)
         {
 			double remainingDifference = 0;
 			double previousRequestDifference = (DateTime.UtcNow - previousRequest).TotalMilliseconds;
@@ -376,6 +388,11 @@ namespace DR.Networking.Core
 			return Task.CompletedTask;
         }
 
+		/// <summary>
+		/// Removes old items from the s_requestCollection (if they exist) and add new ones.
+		/// </summary>
+		/// <param name="uri">Uri to which a network request was made</param>
+		/// <returns>A completed task</returns>
 		private static Task UpdateCollection(Uri uri)
         {
             (bool result, RequestData data, UrlType? type) result = s_requestCollection.FindUri(uri);
