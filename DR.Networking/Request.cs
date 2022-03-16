@@ -1,16 +1,24 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
+
 
 namespace DR.Networking
 {
 	public class Request
 	{
-		private static HttpClient Client = new HttpClient();
-		private static HttpContent content { get; set; }
-		private static HttpResponseHeaders headers { get; set; }
+		private static readonly HttpClient s_client = new HttpClient();
+		private static HttpContent s_content { get; set; }
+		private static HttpResponseHeaders s_headers { get; set; }
+
+		private enum RequestTypes
+        {
+			Get,
+			Post,
+			PostDynamic
+        }
 
 		/// <summary>Make a get request to a address</summary>
 		/// <param name="url">The url (either DNS or IPv4) that you want to make a get request too</param>
@@ -33,25 +41,7 @@ namespace DR.Networking
 		/// </returns>
 		public static async Task<(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers)> Get(string url)
 		{
-			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
-			if (checkUrl.result)
-			{
-				HttpResponseMessage response = await Client.GetAsync(requestUrl);
-				content = response.Content;
-				headers = response.Headers;
-				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
-				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
-				}
-				else
-				{
-					return (true, null, content, headers);
-				}
-			}
-			else
-			{
-				return (false, checkUrl.error, content, headers);
-			}
+			return await MakeRequest(url);
 		}
 
 		/// <summary>Make a get post request to a address</summary>
@@ -87,25 +77,7 @@ namespace DR.Networking
 		/// </returns>
 		public static async Task<(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers)> Post(string url, FormUrlEncodedContent post)
 		{
-			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
-			if (checkUrl.result)
-			{
-				HttpResponseMessage response = await Client.PostAsync(requestUrl, post);
-				content = response.Content;
-				headers = response.Headers;
-				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
-				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
-				}
-				else
-				{
-					return (true, null, content, headers);
-				}
-			}
-			else
-			{
-				return (false, checkUrl.error, content, headers);
-			}
+			return await MakeRequest(url, post);
 		}
 
 		/// <summary>Make a get post request to a address</summary>
@@ -142,26 +114,56 @@ namespace DR.Networking
 		/// </returns>
 		public static async Task<(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers)> Post(string url, dynamic post)
 		{
-			(bool result, string error) checkUrl = Core.Base.CheckUrl(url, out Uri requestUrl);
-			if (checkUrl.result)
+			return await MakeRequest(url, post);
+		}
+
+		/// <summary>
+		/// Base method to make the networking requests.
+		/// </summary>
+		/// <param name="url">The url you want to make the request to</param>
+		/// <param name="post">(Optional) post values</param>
+		/// <returns></returns>
+		private static async Task<(bool result, string errorCode, HttpContent content, HttpResponseHeaders headers)> MakeRequest(string url, dynamic post = null)
+        {
+			(bool result, string error) = Core.Base.CheckUrl(url, out Uri requestUrl);
+			if (result)
 			{
-				var data = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(post), Encoding.UTF8, "application/json");
-				HttpResponseMessage response = await Client.PostAsync(requestUrl, data);
-				content = response.Content;
-				headers = response.Headers;
+				await Core.Base.RateLimit(requestUrl);
+
+				HttpResponseMessage response;
+				if (post == null)
+                {
+					response = await s_client.GetAsync(requestUrl);
+				}
+				else
+                {
+					if (post is FormUrlEncodedContent)
+                    {
+						response = await s_client.PostAsync(requestUrl, post);
+					}
+					else
+                    {
+						post = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(post), Encoding.UTF8, "application/json");
+						response = await s_client.PostAsync(requestUrl, post);
+					}
+                }
+
+				s_content = response.Content;
+				s_headers = response.Headers;
+
 				if (!Core.Base.ResponseStatusMessage(response.StatusCode, out string errorCode))
 				{
-					return (false, string.Format(Core.Base.ErrorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), content, headers);
+					return (false, string.Format(Core.Base.s_errorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {errorCode}"), s_content, s_headers);
 				}
 				else
 				{
-					return (true, null, content, headers);
+					return (true, null, s_content, s_headers);
 				}
 			}
 			else
 			{
-				return (false, checkUrl.error, content, headers);
+				return (false, error, s_content, s_headers);
 			}
-		}
+        }
 	}
 }

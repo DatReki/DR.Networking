@@ -1,17 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DR.Networking.Core
 {
 	internal class Errors
 	{
 		[Serializable]
-		public class HostNameTypeNotSupported : Exception
-		{
-			public HostNameTypeNotSupported() { }
+		public class GenericInvalidUrlError : Exception
+        {
+			public GenericInvalidUrlError() { }
 
-			public HostNameTypeNotSupported(string message) : base(message) { }
+			public GenericInvalidUrlError(string message) : base(message) { }
+        }
+
+		[Serializable]
+		public class RateLimitingUrlNotValid : Exception
+		{
+			public RateLimitingUrlNotValid() { }
+
+			public RateLimitingUrlNotValid(string message) : base(message) { }
 		}
 	}
 }
