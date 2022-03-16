@@ -2,7 +2,65 @@
 A small networking library to make get & post requests
 
 ## Usage
-Make a get request
+Make a get request with rate limiting
+```cs
+using DR.Networking;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        //Assign a global rate limit time. When you make a request to the same URL twice the second time this rate limit will be applied.
+        //Unless you manually specify a rate limit for that page/domain in List<Configuration.SiteSpecific>.
+        TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
+
+        //Create a list of page/domain specific rate limits. Page specific rate limits will be prioritized followed by domain specific rate limits.
+        //If you pass a url which isn't contained in either global rate limit will be used.
+        List<Configuration.SiteSpecific> rateLimitings = new()
+        {
+            new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(5), Url = "https://example.com/" },
+            new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "https://example.org/" },
+            new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(15), Url = "https://example.net/" },
+            new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(20), Url = "https://example.edu/" },
+            new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(25), Url = "https://example.nl/by-sidn/" },
+        };
+
+        //Pass the rate limit to the API (you will only need to set this once).
+        _ = new Configuration(globalRateLimit, rateLimitings);
+
+        //Below is just for example. Run these requests however you want.
+        List<string> Urls = new()
+        {
+            "https://example.com/",
+            "https://example.com/",
+            "https://example.org/",
+            "https://example.org/",
+            "https://example.net/",
+            "https://example.net/",
+            "https://example.edu/",
+            "https://example.edu/",
+            "https://example.nl/by-sidn/",
+            "https://example.nl/by-sidn/",
+        };
+
+        foreach (string url in Urls)
+        {
+            var request = Request.Get(url).Result;
+            if (request.result)
+            {
+                Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            }
+            else
+            {
+                //Handle errors/issues
+                Console.WriteLine(request.errorCode);
+            }
+        }
+    }
+}
+```
+
+Make a get request without rate limiting
 ```cs
 using DR.Networking;
 
@@ -37,6 +95,7 @@ class Program
             new KeyValuePair<string, string>("permission", "user"),
             new KeyValuePair<string, string>("permission_description", "general-user-account")
         });
+
         var request = Request.Post(url, content).Result;
         if (request.result)
         {

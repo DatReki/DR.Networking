@@ -13,7 +13,7 @@
 A small networking library to make get & post requests
 
 ## Usage
-Make a get request with ratelimiting
+Make a get request with rate limiting
 ```cs
 using DR.Networking;
 
@@ -21,11 +21,11 @@ class Program
 {
     static void Main(string[] args)
     {
-        //Assign a global ratelimit time. When you make a request to the same URL twice the second time this ratelimit will be applied.
-        //Unless you manually specify a ratelimit for that page/domain in List<Configuration.SiteSpecific>.
+        //Assign a global rate limit time. When you make a request to the same URL twice the second time this rate limit will be applied.
+        //Unless you manually specify a rate limit for that page/domain in List<Configuration.SiteSpecific>.
         TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
 
-        //Create a list of page/domain specific ratelimits. Page specific ratelimits will be prioritized followed by domain specific ratelimits.
+        //Create a list of page/domain specific rate limits. Page specific rate limits will be prioritized followed by domain specific rate limits.
         //If you pass a url which isn't contained in either global rate limit will be used.
         List<Configuration.SiteSpecific> rateLimitings = new()
         {
@@ -36,7 +36,7 @@ class Program
             new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(25), Url = "https://example.nl/by-sidn/" },
         };
 
-        //Pass the ratelimit to the API (you will only need to set this once).
+        //Pass the rate limit to the API (you will only need to set this once).
         _ = new Configuration(globalRateLimit, rateLimitings);
 
         //Below is just for example. Run these requests however you want.
@@ -71,7 +71,7 @@ class Program
 }
 ```
 
-Make a get request without ratelimiting
+Make a get request without rate limiting
 ```cs
 using DR.Networking;
 
