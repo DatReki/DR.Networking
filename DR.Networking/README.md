@@ -25,7 +25,7 @@ class Program
             new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(25), Url = "https://example.nl/by-sidn/" },
         };
 
-        //Pass the rate limit to the API (you will only need to set this once).
+        //Pass the rate limit to the library (you will only need to set this once).
         _ = new Configuration(globalRateLimit, rateLimitings);
 
         //Below is just for example. Run these requests however you want.
