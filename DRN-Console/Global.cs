@@ -9,13 +9,13 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using DRN_Console.Models;
+using DRN_Core.Models;
 
 namespace DRN_Console
 {
     internal class Global
     {
-		public static PostJson Json { get; set; }
+		public static Data Json { get; set; } = ConfigFile();
 
 		public static void MakeRequest((bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result)
 		{
@@ -58,6 +58,41 @@ namespace DRN_Console
 			}
 		}
 
+		internal static List<KeyValuePair<string, string>> WriteValues()
+        {
+			List<KeyValuePair<string, string>> values = new();
+
+			bool addItem = true;
+			int counter = 0;
+			string parameterName = null;
+			while (addItem)
+			{
+				string answer;
+				if ((counter % 2) == 0)
+				{
+					ColoredConsole("Write the name of the paramter (type 'done' when you're finished)");
+					answer = Console.ReadLine();
+					if (answer == "done")
+					{
+						addItem = false;
+					}
+					else
+					{
+						parameterName = answer;
+					}
+				}
+				else
+				{
+					ColoredConsole("Write the value of the paramter");
+					answer = UserInput();
+
+					values.Add(new KeyValuePair<string, string>(parameterName, answer));
+				}
+				counter++;
+			}
+			return values;
+		}
+
 		internal static void CallDynamicStaticMethod(Type type, string name) => type.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Invoke(null, null);
 
 		internal static void ColoredConsole(string input)
@@ -67,7 +102,7 @@ namespace DRN_Console
 			Console.ResetColor();
         }
 
-		public static void ConfigFile()
+		public static Data ConfigFile()
 		{
 			string directory = Path.GetDirectoryName(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
 			string file = Path.Combine(directory, "config.json");
@@ -76,17 +111,18 @@ namespace DRN_Console
 			bool configFileExits = File.Exists(file);
 			if (!configFileExits)
 			{
-				string json = JsonConvert.SerializeObject(PostJson.GetCredExample(), Formatting.Indented, new StringEnumConverter());
+				string json = JsonConvert.SerializeObject(Data.GetJsonExample(), Formatting.Indented, new StringEnumConverter());
 				File.WriteAllText(file, json);
 			}
 
-			Json = JsonConvert.DeserializeObject<PostJson>(File.ReadAllText(file));
+			Data value = JsonConvert.DeserializeObject<Data>(File.ReadAllText(file));
 
-			if (string.IsNullOrEmpty(Json.PostUrl))
+			if (string.IsNullOrEmpty(value.PostUrl))
 			{
 				ColoredConsole($"Set your post url in {file}");
 				Environment.Exit(0);
 			}
+			return value;
 		}
 
 		internal class Questions

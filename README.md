@@ -156,3 +156,20 @@ class Program
 2. <strong>errorCode</strong>: A string containing the error message in case the request fails.
 3. <strong>content</strong>: HttpContent containing the content returned by the request.
 4. <strong>headers</strong>: HttpResponseHeaders containing the headers returned by the request.
+
+## Compiling
+To compile/run unit tests you'll need to compile the project once. It will give you an error about information missing in a `config.json` file.
+You'll need to pass the url to a HTTP Request & Response Service.
+Personally I use Post Test Server V2.
+
+To use PTSV2 You'll need to go to [here](https://ptsv2.com/) create a new toilet and pass the url to the `PostUrl` variable in `config.json`.
+The url will look like the following `https://ptsv2.com/t/[ID here]/post`.
+
+Whenever you run the console app or use run the unit tests it will post the result there.
+
+### Structure
+The project has the following structure
+* <strong>DR.Networking</strong>: This is the actual library
+* <strong>DRN-Console</strong>: Testing application. Runs manual requests or predefined ones. Just to see if the library is behaving as expected.
+* <strong>DRN-Core</strong>: Stores data both DRN-Console & DRN-Testing need to access (JSON structure/model)
+* <strong>DRN-Testing</strong>: Unit testing for the library

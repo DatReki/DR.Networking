@@ -2,16 +2,16 @@
 using Newtonsoft.Json.Converters;
 using System.ComponentModel;
 
-namespace DRN_Console.Models
+namespace DRN_Core.Models
 {
-    internal class PostJson
+    public class Data
     {
 		[DefaultValue("https://ptsv2.com/")]
 		public string PostUrl { get; set; }
 
-		public static PostJson GetCredExample()
+		public static Data GetJsonExample()
 		{
-			return JsonConvert.DeserializeObject<PostJson>("{}", new JsonSerializerSettings()
+			return JsonConvert.DeserializeObject<Data>("{}", new JsonSerializerSettings()
 			{
 				DefaultValueHandling = DefaultValueHandling.Populate,
 				Converters = new JsonConverter[] { new StringEnumConverter() }

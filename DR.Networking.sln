@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DR.Networking", "DR.Network
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DRN-Console", "DRN-Console\DRN-Console.csproj", "{A94C1472-5EFC-434F-9E1D-FDDDFCFC5D6F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRN-Testing", "DRN-Testing\DRN-Testing.csproj", "{886C06A6-B0BF-4F26-8247-A66D821AFBFD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DRN-Core", "DRN-Core\DRN-Core.csproj", "{C83B44EF-5EFF-41AC-A78E-35CABCC2FA9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{A94C1472-5EFC-434F-9E1D-FDDDFCFC5D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A94C1472-5EFC-434F-9E1D-FDDDFCFC5D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A94C1472-5EFC-434F-9E1D-FDDDFCFC5D6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{886C06A6-B0BF-4F26-8247-A66D821AFBFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{886C06A6-B0BF-4F26-8247-A66D821AFBFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{886C06A6-B0BF-4F26-8247-A66D821AFBFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{886C06A6-B0BF-4F26-8247-A66D821AFBFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C83B44EF-5EFF-41AC-A78E-35CABCC2FA9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C83B44EF-5EFF-41AC-A78E-35CABCC2FA9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C83B44EF-5EFF-41AC-A78E-35CABCC2FA9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C83B44EF-5EFF-41AC-A78E-35CABCC2FA9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

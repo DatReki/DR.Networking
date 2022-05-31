@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using DRN_Console.Models;
 using static DRN_Console.Global;
 using System;
+using System.Linq;
 
 namespace DRN_Console.RunRequests
 {
@@ -36,6 +37,34 @@ namespace DRN_Console.RunRequests
             (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
             MakeRequest(result);
         }
+
+        internal static void GetWithHeaders()
+        {
+            List<AnswerData> answers = new List<AnswerData>()
+            {
+                new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetWithHeadersExample" },
+                new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetWithHeadersManual", }
+            };
+            Answer(answers);
+        }
+
+        private static void GetWithHeadersExample()
+        {
+            var content = new Dictionary<string, string>
+            {
+                { "permission", "user" },
+                { "permission_description", "general-user-account" }
+            };
+            
+            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(Json.PostUrl, content).Result;
+            MakeRequest(result);
+        }
+
+        private static void GetWithHeadersManual()
+        {
+            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(Json.PostUrl, WriteValues().ToDictionary(x => x.Key, x => x.Value)).Result;
+            MakeRequest(result);
+        }
         #endregion
 
         #region PostEncoded
@@ -51,7 +80,6 @@ namespace DRN_Console.RunRequests
 
         private static void PostEncodedExample()
         {
-            ConfigFile();
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("permission", "user"),
@@ -68,8 +96,9 @@ namespace DRN_Console.RunRequests
             string url = Console.ReadLine();
             ColoredConsole("Write your post parameters\n");
 
-            List<KeyValuePair<string, string>> postValues = new();
+            //List<KeyValuePair<string, string>> postValues = new();
 
+            /*
             bool addItem = true;
             int counter = 0;
             string parameterName = null;
@@ -98,8 +127,9 @@ namespace DRN_Console.RunRequests
                 }
                 counter++;
             }
+            */
 
-            FormUrlEncodedContent postHeaders = new FormUrlEncodedContent(postValues);
+            FormUrlEncodedContent postHeaders = new FormUrlEncodedContent(WriteValues());
             (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(url, postHeaders).Result;
             MakeRequest(result);
         }
@@ -114,7 +144,6 @@ namespace DRN_Console.RunRequests
 
         private static void PostDynamicExample()
         {
-            ConfigFile();
             Permissions p = new() { Permission = "user", Permission_Description = "general-user-account" };
 
             (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, p).Result;

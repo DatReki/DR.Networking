@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace DRN_Console
 {
 	class Program
 	{
-		public static List<string> RequestTypes = new() { "get", "post-encoded", "post-dynamic" };
+		public static List<string> RequestTypes = new() { "get", "get-headers", "post-encoded", "post-dynamic" };
 
 		public static string[] Args;
 
@@ -52,10 +54,14 @@ namespace DRN_Console
 							RunRequests.WithoutRateLimiting.Get();
 						}
 						else if (input == RequestTypes.ElementAt(1))
+                        {
+							RunRequests.WithoutRateLimiting.GetWithHeaders();
+						}
+						else if (input == RequestTypes.ElementAt(2))
 						{
 							RunRequests.WithoutRateLimiting.PostEncoded();
 						}
-						else if (input == RequestTypes.ElementAt(2))
+						else if (input == RequestTypes.ElementAt(3))
 						{
 							RunRequests.WithoutRateLimiting.PostDynamic();
 						}
