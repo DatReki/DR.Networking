@@ -18,7 +18,7 @@ jobs:
       with:
         name: "config.json"
         json: ${{ secrets.CONFIG_JSON }}
-        dir: 'DR.Networking/DR.Networking/DRN-Console/bin/Debug/'
+        dir: 'DRN-Console/bin/Debug/'
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
