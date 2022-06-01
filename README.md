@@ -93,6 +93,34 @@ class Program
 }
 ```
 
+Make a get request with headers
+```cs
+using DR.Networking;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var content = new Dictionary<string, string>
+        {
+            { "permission", "user" },
+            { "permission_description", "general-user-account" }
+        };
+	
+        var request = Request.Get(url, content).Result;
+        if (request.result)
+        {
+            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+        }
+        else
+        {
+            //Handle errors/issues
+            Console.WriteLine(request.errorCode);
+        }
+    }
+}
+```
+
 Make a post request (using FormUrlEncodedContent)
 ```cs
 using DR.Networking;
