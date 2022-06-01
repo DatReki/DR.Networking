@@ -1,9 +1,7 @@
-name: .NET
+name: Main workflow
 
 on:
   push:
-    branches: [ '**', master ]
-  pull_request:
     branches: [ '**', master ]
 
 jobs:
@@ -12,7 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: Create JSON (Credentials)
+      id: create-json
+      uses: jsdaniell/create-json@1.1.2
+      with:
+        name: "config.json"
+        json: ${{ secrets.CONFIG_JSON }}
+        dir: 'DR.Networking/DR.Networking/DRN-Console/bin/Debug/'
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
