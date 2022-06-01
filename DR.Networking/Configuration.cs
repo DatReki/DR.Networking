@@ -100,7 +100,7 @@ namespace DR.Networking
                         s_requestCollection.Remove(item);
                         break;
                     case Core.Base.UrlType.Domain:
-                        item = s_requestCollection.Where(i => i._url.AbsolutePath == item._url.AbsolutePath 
+                        item = s_requestCollection.Where(i => i._url.AbsolutePath == item._url.AbsolutePath
                             && i._time == item._time).FirstOrDefault();
                         s_requestCollection.Remove(item);
                         break;
