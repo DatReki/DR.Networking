@@ -10,9 +10,9 @@
 	<PackageTags>http https IPv4 DNS networking request get post rate-limiting throttle</PackageTags>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
-	<Version>1.0.4</Version>
-	<AssemblyVersion>1.0.4</AssemblyVersion>
-	<FileVersion>1.0.4</FileVersion>
+	<Version>1.0.5</Version>
+	<AssemblyVersion>1.0.5</AssemblyVersion>
+	<FileVersion>1.0.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

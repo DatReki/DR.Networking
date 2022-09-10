@@ -19,7 +19,7 @@ namespace DRN_Testing
             {
                 result.Add($"{methodName}_{i}{key}", $"{methodName}_{i}{value}");
             }
-            
+
             return result;
         }
 

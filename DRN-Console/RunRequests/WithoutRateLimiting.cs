@@ -14,7 +14,7 @@ namespace DRN_Console.RunRequests
         #region Get
         internal static void Get()
         {
-            List<AnswerData> answers = new List<AnswerData>()
+            List<AnswerData> answers = new()
             {
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetExample" },
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetManual", }
@@ -40,7 +40,7 @@ namespace DRN_Console.RunRequests
 
         internal static void GetWithHeaders()
         {
-            List<AnswerData> answers = new List<AnswerData>()
+            List<AnswerData> answers = new()
             {
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetWithHeadersExample" },
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "GetWithHeadersManual", }
@@ -55,7 +55,7 @@ namespace DRN_Console.RunRequests
                 { "permission", "user" },
                 { "permission_description", "general-user-account" }
             };
-            
+
             (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(Json.PostUrl, content).Result;
             MakeRequest(result);
         }
@@ -70,7 +70,7 @@ namespace DRN_Console.RunRequests
         #region PostEncoded
         internal static void PostEncoded()
         {
-            List<AnswerData> answers = new List<AnswerData>()
+            List<AnswerData> answers = new()
             {
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "PostEncodedExample" },
                 new() { MethodType = typeof(WithoutRateLimiting), MethodName = "PostEncodedManual", }
@@ -129,7 +129,7 @@ namespace DRN_Console.RunRequests
             }
             */
 
-            FormUrlEncodedContent postHeaders = new FormUrlEncodedContent(WriteValues());
+            FormUrlEncodedContent postHeaders = new(WriteValues());
             (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(url, postHeaders).Result;
             MakeRequest(result);
         }
