@@ -57,8 +57,26 @@ namespace DRN_Testing
         public void GetWithHeadersRequest()
         {
             bool result = false;
-            Dictionary<string, string> content = Global.SetHeaders(Data.Headers.Get.s_key, Data.Headers.Get.s_value);
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_jsonData.PostUrl, content).Result;
+            Dictionary<string, string> headers = Global.SetHeaders(nameof(GetWithHeadersRequest), Data.Headers.Get.s_key, Data.Headers.Get.s_value);
+            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_jsonData.PostUrl, headers).Result;
+
+            if (request.result)
+            {
+                result = true;
+            }
+
+            Assert.IsTrue(result);
+        }
+
+        /// <summary>
+        /// Make a get request with headers
+        /// </summary>
+        [Test]
+        public void GetWithAuthHeadersRequest()
+        {
+            bool result = false;
+            AuthenticationHeaderValue authHeader = new(Data.Headers.s_authHeader);
+            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_jsonData.PostUrl, authHeader).Result;
 
             if (request.result)
             {

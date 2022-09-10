@@ -1,21 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>DatReki</Authors>
     <Description>A small networking library to make get &amp; post requests</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReleaseNotes>Added rate limiting to the library</PackageReleaseNotes>
+    <PackageReleaseNotes>Added the ability for setting more headers</PackageReleaseNotes>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageTags>http https IPv4 DNS networking request get post rate-limiting throttle</PackageTags>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
-	<Version>1.0.3</Version>
-	<AssemblyVersion>1.0.2</AssemblyVersion>
-	<FileVersion>1.0.2</FileVersion>
+	<Version>1.0.4</Version>
+	<AssemblyVersion>1.0.4</AssemblyVersion>
+	<FileVersion>1.0.4</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
+	<None Include="..\.editorconfig" Link=".editorconfig" />
 	<None Include="README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Nager.PublicSuffix" Version="2.2.2" />

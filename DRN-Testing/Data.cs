@@ -13,7 +13,7 @@ namespace DRN_Testing
 
         internal static string s_getUrl = "google.com";
 
-        internal static List<string> s_GetUrlList = new List<string>()
+        internal static List<string> s_GetUrlList = new()
         {
             "https://example.com/",
             "https://example.org/",
@@ -28,9 +28,11 @@ namespace DRN_Testing
 
         internal partial class Headers
         {
-            private static string s_start = "_Unit_Test_";
-            private static string s_key_End = "_Header";
-            private static string s_value_End = "_Value";
+            internal static string s_authHeader = "Password";
+
+            private static readonly string s_start = "_Unit_Test_";
+            private static readonly string s_key_End = "_Header";
+            private static readonly string s_value_End = "_Value";
 
             internal partial class Get
             {
@@ -74,17 +76,17 @@ namespace DRN_Testing
             }
         }
 
-        internal partial class HeadersExample
+        internal partial class BodyExample
         {
             internal string example_name { get; set; }
             internal string example_description { get; set; }
         }
 
-        internal static HeadersExample s_headersExampleData
+        internal static BodyExample s_bodyExampleData
         {
             get
             {
-                return new HeadersExample { example_name = "user", example_description = "general-user-account" }; ;
+                return new BodyExample { example_name = "user", example_description = "general-user-account" }; ;
             }
         }
 

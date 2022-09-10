@@ -70,6 +70,7 @@ class Program
     }
 }
 ```
+Everything in the config region only really needs to be configured/setup once. You can do this in a startup/program file for example. So once you have it setup you don't need to include it in individual requests. Once you do have it configured it will apply ratelimiting to every request if 'globalRateLimit' is specified. Or on every request using a url specified in your 'rateLimitings' list.<br><br>
 
 Make a get request without rate limiting
 ```cs
@@ -101,13 +102,37 @@ class Program
 {
     static void Main(string[] args)
     {
-        var content = new Dictionary<string, string>
+        var headers = new Dictionary<string, string>
         {
             { "permission", "user" },
             { "permission_description", "general-user-account" }
         };
 	
-        var request = Request.Get(url, content).Result;
+        var request = Request.Get(url, headers).Result;
+        if (request.result)
+        {
+            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+        }
+        else
+        {
+            //Handle errors/issues
+            Console.WriteLine(request.errorCode);
+        }
+    }
+}
+```
+
+Make a get request with auth headers
+```cs
+using DR.Networking;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        AuthenticationHeaderValue authHeader = new AuthenticationHeaderValue("password");
+	
+        var request = Request.Get(url, authHeader).Result;
         if (request.result)
         {
             Console.WriteLine(request.content.ReadAsStringAsync().Result);
@@ -149,7 +174,71 @@ class Program
 }
 ```
 
-Or make a post request using dynamic data
+Make a post request with headers
+```cs
+using DR.Networking;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var content = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("permission", "user"),
+            new KeyValuePair<string, string>("permission_description", "general-user-account")
+        });
+
+        var headers = new Dictionary<string, string>
+        {
+            { "permission", "user" },
+            { "permission_description", "general-user-account" }
+        };
+
+        var request = Request.Post(url, content, headers).Result;
+        if (request.result)
+        {
+            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+        }
+        else
+        {
+            //Handle errors/issues
+            Console.WriteLine(request.errorCode);
+        }
+    }
+}
+```
+
+Make a post request with auth headers
+```cs
+using DR.Networking;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var content = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("permission", "user"),
+            new KeyValuePair<string, string>("permission_description", "general-user-account")
+        });
+
+        AuthenticationHeaderValue authHeader = new AuthenticationHeaderValue("password");
+
+        var request = Request.Post(url, content, authHeader).Result;
+        if (request.result)
+        {
+            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+        }
+        else
+        {
+            //Handle errors/issues
+            Console.WriteLine(request.errorCode);
+        }
+    }
+}
+```
+
+Or make a post request using dynamic data (also both type of post requests support headers)
 ```cs
 using DR.Networking;
 

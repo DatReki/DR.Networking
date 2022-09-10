@@ -119,7 +119,7 @@ namespace DRN_Console
 
 			if (string.IsNullOrEmpty(value.PostUrl))
 			{
-				ColoredConsole($"Set your post url in {file}");
+				ColoredConsole($"Config file didn't exist. Add required data to the file. Location: {Path.GetFullPath(file)}");
 				Environment.Exit(0);
 			}
 			return value;
