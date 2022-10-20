@@ -5,14 +5,15 @@
     <Authors>DatReki</Authors>
     <Description>A small networking library to make get &amp; post requests</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReleaseNotes>Added the ability for setting more headers</PackageReleaseNotes>
+    <PackageReleaseNotes>Changed return type of public facing methods in Request.cs.
+Also now clears HttpClient headers before each request.</PackageReleaseNotes>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageTags>http https IPv4 DNS networking request get post rate-limiting throttle</PackageTags>
 	<RepositoryType>git</RepositoryType>
 	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
-	<Version>1.0.5</Version>
-	<AssemblyVersion>1.0.5</AssemblyVersion>
-	<FileVersion>1.0.5</FileVersion>
+	<Version>2.0.0</Version>
+	<AssemblyVersion>2.0.0</AssemblyVersion>
+	<FileVersion>2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
