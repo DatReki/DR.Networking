@@ -1,9 +1,8 @@
-﻿using DR.Networking;
-using NUnit.Framework;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Collections.Generic;
-using System;
+
+using DR.Networking;
+using NUnit.Framework;
 
 namespace DRN_Testing
 {
@@ -16,9 +15,9 @@ namespace DRN_Testing
         public void GetRequest()
         {
             bool result = false;
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_getUrl).Result;
+            DR.Networking.Data request = Request.Get(Data.s_getUrl).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -36,9 +35,9 @@ namespace DRN_Testing
             {
                 for (int i = 0; i < 2; i++)
                 {
-                    (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(url).Result;
+                    DR.Networking.Data request = Request.Get(url).Result;
 
-                    if (!request.result)
+                    if (!request.Result)
                     {
                         Assert.IsTrue(false);
                     }
@@ -58,9 +57,9 @@ namespace DRN_Testing
         {
             bool result = false;
             Dictionary<string, string> headers = Global.SetHeaders(nameof(GetWithHeadersRequest), Data.Headers.Get.s_key, Data.Headers.Get.s_value);
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_jsonData.PostUrl, headers).Result;
+            DR.Networking.Data request = Request.Get(Data.s_jsonData.PostUrl, headers).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -76,9 +75,9 @@ namespace DRN_Testing
         {
             bool result = false;
             AuthenticationHeaderValue authHeader = new(Data.Headers.s_authHeader);
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Get(Data.s_jsonData.PostUrl, authHeader).Result;
+            DR.Networking.Data request = Request.Get(Data.s_jsonData.PostUrl, authHeader).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }

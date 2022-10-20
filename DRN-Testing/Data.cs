@@ -26,7 +26,7 @@ namespace DRN_Testing
 
         internal static List<Configuration.SiteSpecific> s_rateLimits = GetRateLimits();
 
-        internal partial class Headers
+        internal class Headers
         {
             internal static string s_authHeader = "Password";
 
@@ -34,7 +34,7 @@ namespace DRN_Testing
             private static readonly string s_key_End = "_Header";
             private static readonly string s_value_End = "_Value";
 
-            internal partial class Get
+            internal class Get
             {
                 internal static string s_key
                 {
@@ -55,7 +55,7 @@ namespace DRN_Testing
                 }
             }
 
-            internal partial class Post
+            internal class Post
             {
                 internal static string s_key
                 {
@@ -76,7 +76,7 @@ namespace DRN_Testing
             }
         }
 
-        internal partial class BodyExample
+        internal class BodyExample
         {
             internal string example_name { get; set; }
             internal string example_description { get; set; }

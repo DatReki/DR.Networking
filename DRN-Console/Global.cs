@@ -1,14 +1,11 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 using DRN_Core.Models;
 
 namespace DRN_Console
@@ -17,12 +14,12 @@ namespace DRN_Console
     {
         public static Data Json { get; set; } = ConfigFile();
 
-        public static void MakeRequest((bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result)
+        public static void MakeRequest(DR.Networking.Data data)
         {
-            if (result.result)
+            if (data.Result)
             {
                 ColoredConsole($"Headers:");
-                foreach (var header in result.headers)
+                foreach (var header in data.Headers)
                 {
                     ColoredConsole($"	Key: {header.Key}");
                     ColoredConsole($"	Value(s):");
@@ -31,11 +28,11 @@ namespace DRN_Console
                         ColoredConsole($"		{value}");
                     }
                 }
-                ColoredConsole($"\n\n\n\nContent:\n{result.content.ReadAsStringAsync().Result}");
+                ColoredConsole($"\n\n\n\nContent:\n{data.Content.ReadAsStringAsync().Result}");
             }
             else
             {
-                ColoredConsole(result.errorCode);
+                ColoredConsole(data.Error);
             }
         }
 

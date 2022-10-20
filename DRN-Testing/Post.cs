@@ -1,12 +1,9 @@
-﻿using DR.Networking;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using DR.Networking;
+using NUnit.Framework;
 
 namespace DRN_Testing
 {
@@ -17,9 +14,9 @@ namespace DRN_Testing
         {
             bool result = false;
             FormUrlEncodedContent content = Global.SetContent(nameof(PostRequestFormUrlEncodedContent));
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, content).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -35,9 +32,9 @@ namespace DRN_Testing
             FormUrlEncodedContent content = Global.SetContent(nameof(PostRequestFormUrlEncodedContentWithHeaders));
             Dictionary<string, string> headers = Global.SetHeaders(nameof(PostRequestFormUrlEncodedContentWithHeaders), Data.Headers.Post.s_key, Data.Headers.Post.s_value);
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, content, headers).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content, headers).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -52,9 +49,9 @@ namespace DRN_Testing
             FormUrlEncodedContent content = Global.SetContent(nameof(PostRequestFormUrlEncodedContentWithAuthHeaders));
             AuthenticationHeaderValue authHeader = new(Data.Headers.s_authHeader);
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, content, authHeader).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content, authHeader).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -66,9 +63,9 @@ namespace DRN_Testing
         public void PostRequestDynamic()
         {
             bool result = false;
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -82,9 +79,9 @@ namespace DRN_Testing
             bool result = false;
             Dictionary<string, string> headers = Global.SetHeaders(nameof(PostRequestDynamicWithHeaders), Data.Headers.Post.s_key, Data.Headers.Post.s_value);
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, headers).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, headers).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }
@@ -98,9 +95,9 @@ namespace DRN_Testing
             bool result = false;
             AuthenticationHeaderValue authHeader = new(Data.Headers.s_authHeader);
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, authHeader).Result;
+            DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, authHeader).Result;
 
-            if (request.result)
+            if (request.Result)
             {
                 result = true;
             }

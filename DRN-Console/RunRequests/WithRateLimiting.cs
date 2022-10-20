@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Collections.Generic;
 
+using DR.Networking;
 using static DRN_Console.Global;
 
 namespace DRN_Console.RunRequests
@@ -18,16 +17,16 @@ namespace DRN_Console.RunRequests
         private static void GetExample()
         {
             TimeSpan globalRateLimit = TimeSpan.FromSeconds(10);
-            List<DR.Networking.Configuration.SiteSpecific> rateLimitings = new()
+            List<Configuration.SiteSpecific> rateLimitings = new()
             {
-                new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(5), Url = "https://example.com/" },
-                new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "https://example.org/" },
-                new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(15), Url = "https://example.net/" },
-                new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(20), Url = "https://example.edu/" },
-                new DR.Networking.Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(25), Url = "https://example.nl/by-sidn/" },
+                new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(5), Url = "https://example.com/" },
+                new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(10), Url = "https://example.org/" },
+                new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(15), Url = "https://example.net/" },
+                new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(20), Url = "https://example.edu/" },
+                new Configuration.SiteSpecific() { Duration = TimeSpan.FromSeconds(25), Url = "https://example.nl/by-sidn/" },
             };
 
-            _ = new DR.Networking.Configuration(globalRateLimit, rateLimitings);
+            _ = new Configuration(globalRateLimit, rateLimitings);
 
             List<string> Urls = new()
             {
@@ -45,7 +44,7 @@ namespace DRN_Console.RunRequests
 
             DateTime start = DateTime.UtcNow;
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = new();
+            Data result = new();
             DateTime now;
             DateTime end;
 
@@ -53,10 +52,10 @@ namespace DRN_Console.RunRequests
             {
                 now = DateTime.UtcNow;
 
-                result = DR.Networking.Request.Get(url).Result;
+                result = Request.Get(url).Result;
 
                 end = DateTime.UtcNow;
-                ColoredConsole($"Request url: {url}\nRequest status: {result.result}\nRequest start: {now}\nRequest end: {end}\nTime difference: {(end - now).TotalSeconds}\n\n\n\n");
+                ColoredConsole($"Request url: {url}\nRequest status: {result.Result}\nRequest start: {now}\nRequest end: {end}\nTime difference: {(end - now).TotalSeconds}\n\n\n\n");
             }
             DateTime finish = DateTime.UtcNow;
 

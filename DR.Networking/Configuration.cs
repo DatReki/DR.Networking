@@ -45,7 +45,7 @@ namespace DR.Networking
 
         internal static ObservableCollection<RequestData> s_requestCollection = new ObservableCollection<RequestData>();
 
-        public partial class SiteSpecific
+        public class SiteSpecific
         {
             public string Url { get; set; }
             public TimeSpan Duration { get; set; }
@@ -53,7 +53,7 @@ namespace DR.Networking
             internal Uri _uri { get; set; }
         }
 
-        internal partial class RequestData
+        internal class RequestData
         {
             internal Uri _url { get; set; }
             internal DateTime _time { get; set; }

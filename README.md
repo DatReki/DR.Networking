@@ -40,7 +40,7 @@ class Program
         _ = new Configuration(globalRateLimit, rateLimitings);
 
         //Below is just for example. Run these requests however you want.
-        List<string> Urls = new()
+        List<string> urls = new()
         {
             "https://example.com/",
             "https://example.com/",
@@ -54,17 +54,17 @@ class Program
             "https://example.nl/by-sidn/",
         };
 
-        foreach (string url in Urls)
+        foreach (string url in urls)
         {
-            var request = Request.Get(url).Result;
-            if (request.result)
+            Data request = Request.Get(url).Result;
+            if (request.Result)
             {
-                Console.WriteLine(request.content.ReadAsStringAsync().Result);
+                Console.WriteLine(request.Content.ReadAsStringAsync().Result);
             }
             else
             {
                 //Handle errors/issues
-                Console.WriteLine(request.errorCode);
+                Console.WriteLine(request.Error);
             }
         }
     }
@@ -80,15 +80,15 @@ class Program
 {
     static void Main(string[] args)
     {
-        var request = Request.Get(url).Result;
-        if (request.result)
+        Data request = Request.Get(url).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -108,15 +108,15 @@ class Program
             { "permission_description", "general-user-account" }
         };
 	
-        var request = Request.Get(url, headers).Result;
-        if (request.result)
+        Data request = Request.Get(url, headers).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -132,15 +132,15 @@ class Program
     {
         AuthenticationHeaderValue authHeader = new AuthenticationHeaderValue("password");
 	
-        var request = Request.Get(url, authHeader).Result;
-        if (request.result)
+        Data request = Request.Get(url, authHeader).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -160,15 +160,15 @@ class Program
             new KeyValuePair<string, string>("permission_description", "general-user-account")
         });
 
-        var request = Request.Post(url, content).Result;
-        if (request.result)
+        Data request = Request.Post(url, content).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -194,15 +194,15 @@ class Program
             { "permission_description", "general-user-account" }
         };
 
-        var request = Request.Post(url, content, headers).Result;
-        if (request.result)
+        Data request = Request.Post(url, content, headers).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -224,15 +224,15 @@ class Program
 
         AuthenticationHeaderValue authHeader = new AuthenticationHeaderValue("password");
 
-        var request = Request.Post(url, content, authHeader).Result;
-        if (request.result)
+        Data request = Request.Post(url, content, authHeader).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }
@@ -244,7 +244,7 @@ using DR.Networking;
 
 class Program
 {
-    public partial class Permissions
+    public class Permissions
     {
         public string permission { get; set; }
         public string permission_description { get; set; }
@@ -254,15 +254,15 @@ class Program
     {
         Permissions content = new Permissions { permission = "user", permission_description = "general-user-account" };
 
-        var request = Request.Post(url, content).Result;
-        if (request.result)
+        Data request = Request.Post(url, content).Result;
+        if (request.Result)
         {
-            Console.WriteLine(request.content.ReadAsStringAsync().Result);
+            Console.WriteLine(request.Content.ReadAsStringAsync().Result);
         }
         else
         {
             //Handle errors/issues
-            Console.WriteLine(request.errorCode);
+            Console.WriteLine(request.Error);
         }
     }
 }

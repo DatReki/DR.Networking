@@ -1,11 +1,11 @@
-﻿using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System;
+using System.Linq;
+using System.Net.Http;
 using System.Collections.Generic;
 
 using DRN_Console.Models;
 using static DRN_Console.Global;
-using System;
-using System.Linq;
+
 
 namespace DRN_Console.RunRequests
 {
@@ -22,19 +22,21 @@ namespace DRN_Console.RunRequests
             Answer(answers);
         }
 
+        /// <see cref="Global.Answer(List{AnswerData})"/> is called via reflection.
         private static void GetExample()
         {
             string exampleWebsite = "https://www.example.com";
             ColoredConsole($"Making a request to {exampleWebsite}");
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(exampleWebsite).Result;
+            DR.Networking.Data result = DR.Networking.Request.Get(exampleWebsite).Result;
             MakeRequest(result);
         }
 
+        /// <see cref="Global.Answer(List{AnswerData})"/> is called via reflection.
         private static void GetManual()
         {
             ColoredConsole("Write an url that you want to make a get request to");
             string url = UserInput();
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(url).Result;
+            DR.Networking.Data result = DR.Networking.Request.Get(url).Result;
             MakeRequest(result);
         }
 
@@ -56,13 +58,13 @@ namespace DRN_Console.RunRequests
                 { "permission_description", "general-user-account" }
             };
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(Json.PostUrl, content).Result;
+            DR.Networking.Data result = DR.Networking.Request.Get(Json.PostUrl, content).Result;
             MakeRequest(result);
         }
 
         private static void GetWithHeadersManual()
         {
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Get(Json.PostUrl, WriteValues().ToDictionary(x => x.Key, x => x.Value)).Result;
+            DR.Networking.Data result = DR.Networking.Request.Get(Json.PostUrl, WriteValues().ToDictionary(x => x.Key, x => x.Value)).Result;
             MakeRequest(result);
         }
         #endregion
@@ -86,7 +88,7 @@ namespace DRN_Console.RunRequests
                 new KeyValuePair<string, string>("permission_description", "general-user-account")
             });
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, content).Result;
+            DR.Networking.Data result = DR.Networking.Request.Post(Json.PostUrl, content).Result;
             MakeRequest(result);
         }
 
@@ -96,41 +98,8 @@ namespace DRN_Console.RunRequests
             string url = Console.ReadLine();
             ColoredConsole("Write your post parameters\n");
 
-            //List<KeyValuePair<string, string>> postValues = new();
-
-            /*
-            bool addItem = true;
-            int counter = 0;
-            string parameterName = null;
-            while (addItem)
-            {
-                string answer;
-                if ((counter % 2) == 0)
-                {
-                    ColoredConsole("Write the name of the paramter (type 'done' when you're finished)");
-                    answer = Console.ReadLine();
-                    if (answer == "done")
-                    {
-                        addItem = false;
-                    }
-                    else
-                    {
-                        parameterName = answer;
-                    }
-                }
-                else
-                {
-                    ColoredConsole("Write the value of the paramter");
-                    answer = UserInput();
-
-                    postValues.Add(new KeyValuePair<string, string>(parameterName, answer));
-                }
-                counter++;
-            }
-            */
-
             FormUrlEncodedContent postHeaders = new(WriteValues());
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(url, postHeaders).Result;
+            DR.Networking.Data result = DR.Networking.Request.Post(url, postHeaders).Result;
             MakeRequest(result);
         }
         #endregion
@@ -146,7 +115,7 @@ namespace DRN_Console.RunRequests
         {
             Permissions p = new() { Permission = "user", Permission_Description = "general-user-account" };
 
-            (bool result, string errorCode, HttpContent content, HttpResponseHeaders headers) result = DR.Networking.Request.Post(Json.PostUrl, p).Result;
+            DR.Networking.Data result = DR.Networking.Request.Post(Json.PostUrl, p).Result;
             MakeRequest(result);
         }
         #endregion
