@@ -1,10 +1,10 @@
-﻿using System;
-using System.Linq;
+﻿using DR.Networking.Core.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-
-using DR.Networking.Core.Extensions;
+using System.Linq;
+using System.Net.Http;
 
 namespace DR.Networking
 {
@@ -15,7 +15,8 @@ namespace DR.Networking
         /// </summary>
         /// <param name="rateLimit">TimeSpan value for the global ratelimit</param>
         /// <param name="perSite">A list containing site/url specific ratelimits</param>
-        public Configuration(TimeSpan? rateLimit = null, List<SiteSpecific> perSite = null)
+        /// <param name="client">Pass your own HttpClient if you want to apply configurations not provided by the library.</param>
+        public Configuration(TimeSpan? rateLimit = null, List<SiteSpecific>? perSite = null, HttpClient? client = null)
         {
             if (rateLimit != null)
                 Global = (TimeSpan)rateLimit;
@@ -24,6 +25,8 @@ namespace DR.Networking
                 PerSites = perSite;
                 Core.Base.UpdateSiteSpecificList(PerSites);
             }
+            if (client != null)
+                Request.s_client = client;
         }
 
         static Configuration()
@@ -73,13 +76,9 @@ namespace DR.Networking
 
                 (bool result, SiteSpecific item) found = PerSites.FindUri(item._url);
                 if (found.result)
-                {
                     RequestCollectionRemove(found.item.Duration, (Core.Base.UrlType)found.item._urlType, item);
-                }
                 else
-                {
                     return;
-                }
             }
         }
 
@@ -100,8 +99,9 @@ namespace DR.Networking
                         s_requestCollection.Remove(item);
                         break;
                     case Core.Base.UrlType.Domain:
-                        item = s_requestCollection.Where(i => i._url.AbsolutePath == item._url.AbsolutePath
-                            && i._time == item._time).FirstOrDefault();
+                        item = s_requestCollection
+                            .Where(i => i._url.AbsolutePath == item._url.AbsolutePath && i._time == item._time)
+                            .FirstOrDefault();
                         s_requestCollection.Remove(item);
                         break;
                 }

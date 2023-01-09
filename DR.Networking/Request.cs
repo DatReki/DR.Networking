@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Text;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Net.Http.Headers;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DR.Networking
 {
     public class Request
     {
-        private static readonly HttpClient s_client = new HttpClient();
-        private static HttpContent s_content { get; set; }
-        private static HttpResponseHeaders s_headers { get; set; }
+        internal static HttpClient s_client = new HttpClient();
 
         private enum RequestTypes
         {
@@ -129,9 +127,9 @@ namespace DR.Networking
         /// <param name="body">(Optional) post values</param>
         /// <param name="headerValues">headers you want to set with the request</param>
         /// <returns>Data about the result of the request.</returns>
-        private static async Task<Data> MakeRequest(string url, RequestTypes request, dynamic body = null, dynamic headerValues = null)
+        private static async Task<Data> MakeRequest(string url, RequestTypes request, dynamic? body = null, dynamic? headerValues = null)
         {
-            Data result = new Data();
+            Data result;
             s_client.DefaultRequestHeaders.Clear();
 
             (bool checkUrl, string error) = Core.Base.CheckUrl(url, out Uri requestUrl);
@@ -142,12 +140,10 @@ namespace DR.Networking
                 if (headerValues != null)
                 {
                     if (headerValues is AuthenticationHeaderValue)
-                    {
                         s_client.DefaultRequestHeaders.Authorization = headerValues;
-                    }
-                    else // headerValues is Dictionary<string, string>
+                    else
                     {
-                        foreach (KeyValuePair<string, string> item in headerValues as Dictionary<string, string>)
+                        foreach (KeyValuePair<string, string> item in (Dictionary<string, string>)headerValues)
                         {
                             s_client.DefaultRequestHeaders.Add(item.Key, item.Value);
                         }
@@ -163,9 +159,7 @@ namespace DR.Networking
                     case RequestTypes.Post:
                     default:
                         if (body is FormUrlEncodedContent)
-                        {
                             response = await s_client.PostAsync(requestUrl, body);
-                        }
                         else
                         {
                             body = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
@@ -174,17 +168,17 @@ namespace DR.Networking
                         break;
                 }
 
-                s_headers = response.Headers;
-                s_content = response.Content;
+                HttpResponseHeaders headers = response.Headers;
+                HttpContent content = response.Content;
 
                 if (Core.Base.ResponseStatusMessage(response.StatusCode, out string statusError))
                 {
                     result = new Data()
                     {
                         Result = true,
-                        Error = null,
-                        Content = s_content,
-                        Headers = s_headers
+                        Error = string.Empty,
+                        Content = content,
+                        Headers = headers
                     };
                 }
                 else
@@ -193,8 +187,8 @@ namespace DR.Networking
                     {
                         Result = false,
                         Error = string.Format(Core.Base.s_errorLayout, requestUrl.AbsoluteUri, $"Something went wrong while making the request.\nStatus code: {(int)response.StatusCode}\nExplanation: {statusError}"),
-                        Content = s_content,
-                        Headers = s_headers
+                        Content = content,
+                        Headers = headers
                     };
                 }
             }
@@ -204,8 +198,8 @@ namespace DR.Networking
                 {
                     Result = false,
                     Error = error,
-                    Content = s_content,
-                    Headers = s_headers
+                    Content = null,
+                    Headers = null
                 };
             }
             return result;

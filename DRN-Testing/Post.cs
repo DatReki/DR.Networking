@@ -1,9 +1,8 @@
-﻿using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Collections.Generic;
-
-using DR.Networking;
+﻿using DR.Networking;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace DRN_Testing
 {
@@ -17,9 +16,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -35,9 +32,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content, headers).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -52,9 +47,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, content, authHeader).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -66,9 +59,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -82,9 +73,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, headers).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -98,9 +87,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Post(Data.s_jsonData.PostUrl, Data.s_bodyExampleData, authHeader).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }

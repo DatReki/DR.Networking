@@ -1,14 +1,12 @@
-﻿using System;
+﻿using DR.Networking.Core.Extensions;
+using Nager.PublicSuffix;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using Nager.PublicSuffix;
-
-using DR.Networking.Core.Extensions;
-using static DR.Networking.Core.Errors;
 using static DR.Networking.Configuration;
+using static DR.Networking.Core.Errors;
 
 namespace DR.Networking.Core
 {
@@ -54,7 +52,7 @@ namespace DR.Networking.Core
         /// <exception cref="Exception"></exception>
         internal static (bool result, string error) CheckUrl(string url, out Uri newUrl, bool updateSiteSpecificList = false)
         {
-            newUrl = null;
+            newUrl = new Uri("about:blank");
             if (IPAddress.TryParse(url, out IPAddress address))
             {
                 string error = "Provided {0} is of an unsuported type";
@@ -63,9 +61,7 @@ namespace DR.Networking.Core
                 {
                     case System.Net.Sockets.AddressFamily.InterNetwork: //IPv4
                         if (Uri.TryCreate(CheckHttpProtocol(url, Protocol.Http), UriKind.RelativeOrAbsolute, out newUrl))
-                        {
-                            return (true, null);
-                        }
+                            return (true, string.Empty);
                         break;
                     case System.Net.Sockets.AddressFamily.InterNetworkV6: //IPv6
                         return (false, string.Format(s_errorLayout, address, $"{string.Format(error, "address")} (IPv6)"));
@@ -94,9 +90,7 @@ namespace DR.Networking.Core
                             return (false, string.Format(s_errorLayout, url, "The url you provided isn't valid"));
                         }
                         else
-                        {
                             throw new Exception($"Something went wrong while parsing your URL.\nUrl: {newUrl}\nError: {ex}");
-                        }
                     }
 
                     if (domainName.TLD.Length > 0)
@@ -105,7 +99,7 @@ namespace DR.Networking.Core
                         {
                             //See if "URL" has a valid host entry
                             Dns.GetHostEntry(domainName.RegistrableDomain);
-                            return (true, null);
+                            return (true, string.Empty);
                         }
                         catch
                         {
@@ -115,11 +109,9 @@ namespace DR.Networking.Core
                     return (false, string.Format(s_errorLayout, url, "The provided URL does not have a valid top level domain"));
                 }
                 else
-                {
                     return (false, string.Format(s_errorLayout, address, $"The provided URL/address isn't supported"));
-                }
             }
-            return (false, null);
+            return (false, string.Empty);
         }
 
         /// <summary>
@@ -138,16 +130,11 @@ namespace DR.Networking.Core
                     newUri = url;
                     break;
                 default:
-                    switch (protocol)
+                    newUri = protocol switch
                     {
-                        case Protocol.Http:
-                        default:
-                            newUri = "http://" + url;
-                            break;
-                        case Protocol.Https:
-                            newUri = "https://" + url;
-                            break;
-                    }
+                        Protocol.Https => "https://" + url,
+                        _ => "http://" + url,
+                    };
                     break;
             }
             return newUri;
@@ -295,7 +282,7 @@ namespace DR.Networking.Core
                     return false;
 
                 default:
-                    errorMsg = null;
+                    errorMsg = string.Empty;
                     return true;
             }
         }
@@ -312,23 +299,16 @@ namespace DR.Networking.Core
             {
                 if (CheckUrl(item.Url, out Uri url, true).result)
                 {
-                    UrlType urlType;
-                    switch (url.AbsolutePath)
+                    UrlType urlType = url.AbsolutePath switch
                     {
-                        case "/":
-                            urlType = UrlType.Domain;
-                            break;
-                        default:
-                            urlType = UrlType.Page;
-                            break;
-                    }
+                        "/" => UrlType.Domain,
+                        _ => UrlType.Page,
+                    };
                     item._urlType = urlType;
                     item._uri = url;
                 }
                 else
-                {
                     throw new RateLimitingUrlNotValid($"One of the urls you provided for domain/url specific rate limiting is not a valid url: {item.Url}");
-                }
             }
             return siteList;
         }
@@ -348,9 +328,7 @@ namespace DR.Networking.Core
                 if (getSite.result)
                 {
                     if (getRequest.result)
-                    {
                         await RateLimit(getSite.item.Duration.TotalMilliseconds, getRequest.request._time);
-                    }
 
                     await UpdateCollection(requestUrl);
                 }
@@ -359,9 +337,7 @@ namespace DR.Networking.Core
                     if (Global != null)
                     {
                         if (getRequest.result)
-                        {
                             await RateLimit(Global.Value.TotalMilliseconds, getRequest.request._time);
-                        }
 
                         await UpdateCollection(requestUrl);
                     }
@@ -397,9 +373,7 @@ namespace DR.Networking.Core
         {
             (bool result, RequestData data, UrlType? type) result = s_requestCollection.FindUri(uri);
             if (result.result)
-            {
                 s_requestCollection.Remove(result.data);
-            }
 
             RequestData responseData = new RequestData()
             {

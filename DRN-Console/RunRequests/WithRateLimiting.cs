@@ -1,7 +1,6 @@
-﻿using System;
+﻿using DR.Networking;
+using System;
 using System.Collections.Generic;
-
-using DR.Networking;
 using static DRN_Console.Global;
 
 namespace DRN_Console.RunRequests

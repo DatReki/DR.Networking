@@ -30,18 +30,12 @@ namespace DR.Networking.Core.Extensions
             {
                 SiteSpecific findDomain = list.Find(r => r._uri.AbsoluteUri == target.AbsoluteUri);
                 if (findDomain == null)
-                {
-                    return (false, null);
-                }
+                    return (false, new SiteSpecific());
                 else
-                {
                     return (true, findDomain);
-                }
             }
             else
-            {
                 return (true, findPage);
-            }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace DR.Networking
     {
         public bool Result { get; set; }
         public string Error { get; set; } = string.Empty;
-        public HttpContent Content { get; set; } 
-        public HttpResponseHeaders Headers { get; set; }
+        public HttpContent? Content { get; set; } = null;
+        public HttpResponseHeaders? Headers { get; set; } = null;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace DR.Networking.Core
 {
-    internal class Errors
+    public class Errors
     {
         [Serializable]
         public class GenericInvalidUrlError : Exception

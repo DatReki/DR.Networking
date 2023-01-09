@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DRN_Console.Models
+﻿namespace DRN_Console.Models
 {
     internal class Permissions
     {
