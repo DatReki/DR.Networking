@@ -9,7 +9,11 @@ namespace DR.Networking
 {
     public class Request
     {
-        internal static HttpClient s_client = new HttpClient();
+        internal static HttpClient s_client = new HttpClient(new StandardSocketsHttpHandler()
+        {
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(1),
+        });
 
         private enum RequestTypes
         {

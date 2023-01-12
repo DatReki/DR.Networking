@@ -25,6 +25,7 @@
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Include="Nager.PublicSuffix" Version="2.2.2" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.4" />
 	</ItemGroup>
 
 </Project>
