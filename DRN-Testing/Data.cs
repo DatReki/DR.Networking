@@ -1,9 +1,6 @@
 ﻿using DR.Networking;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DRN_Testing
 {
@@ -40,7 +37,6 @@ namespace DRN_Testing
                 {
                     get
                     {
-
                         return $"{s_start}Get{s_key_End}";
                     }
                 }
@@ -49,7 +45,6 @@ namespace DRN_Testing
                 {
                     get
                     {
-
                         return $"{s_start}Get{s_value_End}";
                     }
                 }
@@ -61,7 +56,6 @@ namespace DRN_Testing
                 {
                     get
                     {
-
                         return $"{s_start}Post{s_key_End}";
                     }
                 }

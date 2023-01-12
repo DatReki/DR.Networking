@@ -1,9 +1,8 @@
-using System.IO;
 using DR.Networking;
-using NUnit.Framework;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-
+using NUnit.Framework;
+using System.IO;
 using Core = DRN_Core.Models;
 
 namespace DRN_Testing

@@ -1,8 +1,7 @@
-﻿using System.Net.Http.Headers;
-using System.Collections.Generic;
-
-using DR.Networking;
+﻿using DR.Networking;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
 
 namespace DRN_Testing
 {
@@ -18,9 +17,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Get(Data.s_getUrl).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -38,9 +35,7 @@ namespace DRN_Testing
                     DR.Networking.Data request = Request.Get(url).Result;
 
                     if (!request.Result)
-                    {
                         Assert.IsTrue(false);
-                    }
 
                     i++;
                 }
@@ -60,9 +55,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Get(Data.s_jsonData.PostUrl, headers).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }
@@ -78,9 +71,7 @@ namespace DRN_Testing
             DR.Networking.Data request = Request.Get(Data.s_jsonData.PostUrl, authHeader).Result;
 
             if (request.Result)
-            {
                 result = true;
-            }
 
             Assert.IsTrue(result);
         }

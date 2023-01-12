@@ -6,7 +6,7 @@ namespace DRN_Core.Models
 {
     public class Data
     {
-        [DefaultValue("https://ptsv2.com/")]
+        [DefaultValue("https://webhook.site/")]
         public string PostUrl { get; set; }
 
         public static Data GetJsonExample()

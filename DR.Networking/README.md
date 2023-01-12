@@ -260,7 +260,7 @@ class Program
 ```
 
 ### Return values
-1. **result**: Boolean which indicates if the request passed or failed.
-2. **errorCode**: A string containing the error message in case the request fails.
-3. **content**: HttpContent containing the content returned by the request.
-4. **headers**: HttpResponseHeaders containing the headers returned by the request.
+1. **Result**: Boolean which indicates if the request passed or failed.
+2. **Error**: A string containing the error message in case the request fails.
+3. **Content**: HttpContent containing the content returned by the request if successful.
+4. **Headers**: HttpResponseHeaders containing the headers returned by the request if successful.

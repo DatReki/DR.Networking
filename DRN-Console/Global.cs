@@ -1,12 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Collections.Generic;
-
+﻿using DRN_Core.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-
-using DRN_Core.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 
 namespace DRN_Console
 {
@@ -70,13 +68,9 @@ namespace DRN_Console
                     ColoredConsole("Write the name of the paramter (type 'done' when you're finished)");
                     answer = Console.ReadLine();
                     if (answer == "done")
-                    {
                         addItem = false;
-                    }
                     else
-                    {
                         parameterName = answer;
-                    }
                 }
                 else
                 {
@@ -125,7 +119,6 @@ namespace DRN_Console
         internal class Questions
         {
             internal static readonly string ExampleOrManul = "Do you want to run an example request or a manual one? (example/manual)";
-
         }
 
         public class AnswerData

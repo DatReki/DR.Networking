@@ -269,20 +269,15 @@ class Program
 ```
 
 ### Return values
-1. <strong>result</strong>: Boolean which indicates if the request passed or failed.
-2. <strong>errorCode</strong>: A string containing the error message in case the request fails.
-3. <strong>content</strong>: HttpContent containing the content returned by the request.
-4. <strong>headers</strong>: HttpResponseHeaders containing the headers returned by the request.
+1. <strong>Result</strong>: Boolean which indicates if the request passed or failed.
+2. <strong>Error</strong>: A string containing the error message in case the request fails.
+3. <strong>Content</strong>: HttpContent containing the content returned by the request if successful.
+4. <strong>Headers</strong>: HttpResponseHeaders containing the headers returned by the request if successful.
 
 ## Compiling
 To compile/run unit tests you'll need to compile the project once. It will give you an error about information missing in a `config.json` file.
 You'll need to pass the url to a HTTP Request & Response Service.
-Personally I use Post Test Server V2.
-
-To use PTSV2 You'll need to go to [here](https://ptsv2.com/) create a new toilet and pass the url to the `PostUrl` variable in `config.json`.
-The url will look like the following `https://ptsv2.com/t/[ID here]/post`.
-
-Whenever you run the console app or use run the unit tests it will post the result there.
+Examples of these services are [webhook.site](https://webhook.site/) & [ptsv2](http://ptsv2.com/).
 
 ### Structure
 The project has the following structure
