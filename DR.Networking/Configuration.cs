@@ -1,111 +1,38 @@
-﻿using System;
-using System.Linq;
+﻿using DR.Networking.Core;
+using DR.Networking.Models;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-
-using DR.Networking.Core.Extensions;
+using System.Net.Http;
+using System.Text;
 
 namespace DR.Networking
 {
     public class Configuration
     {
         /// <summary>
-        /// A constructor to setup ratelimit settings
+        /// Pass a custom configuration for the library to use.
         /// </summary>
-        /// <param name="rateLimit">TimeSpan value for the global ratelimit</param>
-        /// <param name="perSite">A list containing site/url specific ratelimits</param>
-        public Configuration(TimeSpan? rateLimit = null, List<SiteSpecific> perSite = null)
+        /// <param name="duration">
+        /// A global ratelimit applied to all request. <br /> 
+        /// This value will be overwritten if the url called is in the <see cref="UrlSpecificRateLimiting"/> list.
+        /// </param>
+        /// <param name="urlSpecific">A list of url/domain specific rate limit settings.</param>
+        /// <param name="client">Pass your own HttpClient for the library to use.</param>
+        /// <param name="defaultHttp">
+        /// By default if neither HTTP or HTTPS is provided at the start of the request url the library will use HTTPS. <br />
+        /// If you pass true to this parameter the library will add HTTP by default to the request url.
+        /// </param>
+        public Configuration(TimeSpan? duration, List<UrlSpecificRateLimiting> urlSpecific, HttpClient? client, bool? defaultHttp)
         {
-            if (rateLimit != null)
-                Global = (TimeSpan)rateLimit;
-            if (perSite != null)
-            {
-                PerSites = perSite;
-                Core.Base.UpdateSiteSpecificList(PerSites);
-            }
-        }
+            if (duration != null) { }
 
-        static Configuration()
-        {
-            s_requestCollection.CollectionChanged += RequestCollectionChanged;
-        }
+            if (urlSpecific != null) { }
 
-        /// <summary>
-        /// TimeSpan for the global ratelimit (if you make multiple calls to the same Uri how much time minimally needs to be between them)
-        /// </summary>
-        public static TimeSpan? Global { get; set; }
+            if (client != null)
+                Main.Client = client;
 
-#nullable enable
-        /// <summary>
-        /// Set ratelimits for individual Uri's
-        /// </summary>
-        public static List<SiteSpecific>? PerSites { get; set; }
-#nullable disable
-
-        internal static ObservableCollection<RequestData> s_requestCollection = new ObservableCollection<RequestData>();
-
-        public class SiteSpecific
-        {
-            public string Url { get; set; }
-            public TimeSpan Duration { get; set; }
-            internal Core.Base.UrlType? _urlType { get; set; }
-            internal Uri _uri { get; set; }
-        }
-
-        internal class RequestData
-        {
-            internal Uri _url { get; set; }
-            internal DateTime _time { get; set; }
-        }
-
-        /// <summary>
-        /// Check if data about previous requests (Uri and time of the request) can be removed from the collection. 
-        /// This is for rate limiting purposes
-        /// </summary>
-        /// <param name="sender">The object that raised the event</param>
-        /// <param name="e">Information about the event</param>
-        private static void RequestCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            for (int i = 0; i < s_requestCollection.Count; i++)
-            {
-                RequestData item = s_requestCollection[i];
-
-                (bool result, SiteSpecific item) found = PerSites.FindUri(item._url);
-                if (found.result)
-                {
-                    RequestCollectionRemove(found.item.Duration, (Core.Base.UrlType)found.item._urlType, item);
-                }
-                else
-                {
-                    return;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Remove item from collection after the ratelimit time span has passed
-        /// </summary>
-        /// <param name="rateLimit">Duration for how long you want to wait between requests</param>
-        /// <param name="type">Type of the url that's been checked (since we can have both domain and page specific ratelimits).</param>
-        /// <param name="item">The item that is to be removed from the collection</param>
-        private static void RequestCollectionRemove(TimeSpan rateLimit, Core.Base.UrlType type, RequestData item)
-        {
-            bool check = (DateTime.UtcNow - item._time) > rateLimit;
-            if (check)
-            {
-                switch (type)
-                {
-                    case Core.Base.UrlType.Page:
-                        s_requestCollection.Remove(item);
-                        break;
-                    case Core.Base.UrlType.Domain:
-                        item = s_requestCollection.Where(i => i._url.AbsolutePath == item._url.AbsolutePath
-                            && i._time == item._time).FirstOrDefault();
-                        s_requestCollection.Remove(item);
-                        break;
-                }
-            }
+            if (defaultHttp != null)
+                Settings.UseHttpsByDefault = defaultHttp != true;
         }
     }
 }

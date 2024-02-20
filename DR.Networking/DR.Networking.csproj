@@ -2,26 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Authors>DatReki</Authors>
-    <Description>A small networking library to make get &amp; post requests</Description>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReleaseNotes>Changed return type of public facing methods in Request.cs.
-Also now clears HttpClient headers before each request.</PackageReleaseNotes>
-	<PackageReadmeFile>README.md</PackageReadmeFile>
-	<PackageTags>http https IPv4 DNS networking request get post rate-limiting throttle</PackageTags>
-	<RepositoryType>git</RepositoryType>
-	<RepositoryUrl>https://github.com/DatReki/DR.Networking</RepositoryUrl>
-	<Version>2.0.0</Version>
-	<AssemblyVersion>2.0.0</AssemblyVersion>
-	<FileVersion>2.0.0</FileVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-	<None Include="..\.editorconfig" Link=".editorconfig" />
-	<None Include="README.md" Pack="true" PackagePath="\" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Nager.PublicSuffix" Version="2.2.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.8" />
   </ItemGroup>
 
 </Project>

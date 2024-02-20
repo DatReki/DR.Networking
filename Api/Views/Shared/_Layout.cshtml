@@ -1,0 +1,18 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @await RenderSectionAsync("Metadata", required: false)
+    <title>@ViewData["Title"] - Api</title>
+    @await RenderSectionAsync("Css", required: false)
+</head>
+<body>
+    <div id="content-container">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+    @await RenderSectionAsync("Js", required: false)
+</body>
+</html>
