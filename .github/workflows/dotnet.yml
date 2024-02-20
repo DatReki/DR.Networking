@@ -17,18 +17,12 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 8.0.x
+    
     - name: Restore dependencies
       run: dotnet restore
+    
     - name: Build
       run: dotnet build --no-restore
-      
-    - name: Create JSON (Credentials)
-      id: create-json
-      uses: jsdaniell/create-json@1.1.2
-      with:
-        name: "config.json"
-        json: ${{ secrets.CONFIG_JSON }}
-        dir: 'DRN-Console/bin/Debug/'
 
     - name: Test
       run: dotnet test --no-build --verbosity normal
