@@ -2,7 +2,7 @@
 
 namespace DR.Networking.Models
 {
-    public class UrlSpecificRateLimiting
+    public class UrlSpecificRateLimit
     {
         /// <summary>
         /// Url to which you want the rate limit settings to be applied to.

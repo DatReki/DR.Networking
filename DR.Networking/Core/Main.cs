@@ -54,10 +54,12 @@ namespace DR.Networking.Core
         {
             ResultData result = new ResultData();
 
-            CheckUrlModel urlChecked = Base.CheckUrl(url);
+            CheckUrlModel urlChecked = await Base.CheckUrl(url);
 
             if (!urlChecked.Success)
             {
+                await RateLimiter.Check(url);
+
                 return new ResultData()
                 {
                     Success = urlChecked.Success,
