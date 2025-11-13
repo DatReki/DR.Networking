@@ -9,13 +9,15 @@ namespace DR.Networking.Models
             Success = false;
             Url = new Uri("about:blank");
             Error = string.Empty;
+            ErrorType = 0;
         }
 
-        public CheckUrlModel(bool? success, Uri? url, string? error)
+        public CheckUrlModel(bool? success, Uri? url, string? error, ErrorType? type)
         {
             Success = success ?? false;
             Url = url ?? new Uri("about:blank");
             Error = error ?? string.Empty;
+            ErrorType = type ?? 0;
         }
 
         /// <summary>
@@ -32,5 +34,10 @@ namespace DR.Networking.Models
         /// An error message explaining what went wrong if <see cref="Success"/> is false.
         /// </summary>
         internal string Error { get; set; }
+
+        /// <summary>
+        /// Indicates what type of error the error message is referencing.
+        /// </summary>
+        internal ErrorType ErrorType { get; set; }
     }
 }

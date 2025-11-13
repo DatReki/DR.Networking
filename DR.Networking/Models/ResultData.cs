@@ -4,6 +4,42 @@ using System.Net.Http.Headers;
 namespace DR.Networking.Models
 {
     /// <summary>
+    /// Indicates what type of error the error message is referencing.
+    /// </summary>
+    public enum ErrorType
+    {
+        /// <summary>
+        /// The library was able to parse either a valid IPv4/IPv6 address from the URL or a fully qualified domain name (FQDN).
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// The library was unable to parse either an IPv4 or IPv6 address from the URL.
+        /// </summary>
+        InvalidIpAddress,
+
+        /// <summary>
+        /// The library was unable to parse a fully qualified domain name (FQDN) from the URL.
+        /// </summary>
+        InvalidDomain,
+
+        /// <summary>
+        /// The hostname was invalid or the library was either unable to resolve or parse it.
+        /// </summary>
+        InvalidHostname,
+
+        /// <summary>
+        /// The library was unable to parse either a valid IPv4/IPv6 address from the URL or a fully qualified domain name (FQDN).
+        /// </summary>
+        InvalidUrl,
+
+        /// <summary>
+        /// The requested request type is either not supported or not yet implemented
+        /// </summary>
+        RequestTypeNotSupported,
+    }
+
+    /// <summary>
     /// Contains the data about the result of the request.
     /// </summary>
     public class ResultData
@@ -12,6 +48,11 @@ namespace DR.Networking.Models
         /// Indicates if the request was successful.
         /// </summary>
         public bool Success { get; set; } = false;
+
+        /// <summary>
+        /// The url to which the request was made.
+        /// </summary>
+        public string Url { get; set; } = string.Empty;
 
         /// <summary>
         /// The HTTP status code associated with the request. <br />
@@ -23,6 +64,11 @@ namespace DR.Networking.Models
         /// The error explaining what went wrong during the request if <see cref="Success"/> is false.
         /// </summary>
         public string Error { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Indicates what type of error the error message is referencing.
+        /// </summary>
+        public ErrorType ErrorType { get; set; }
 
         /// <summary>
         /// The response content of the request if <see cref="Success"/> is true.

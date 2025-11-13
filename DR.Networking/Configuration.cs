@@ -2,6 +2,7 @@
 using DR.Networking.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 
 namespace DR.Networking
@@ -21,7 +22,8 @@ namespace DR.Networking
         /// By default if neither HTTP or HTTPS is provided at the start of the request url the library will use HTTPS. <br />
         /// If you pass true to this parameter the library will add HTTP by default to the request url.
         /// </param>
-        public Configuration(TimeSpan? duration, List<UrlSpecificRateLimit> urlSpecific, HttpClient? client, bool? defaultHttp)
+        public Configuration(TimeSpan? duration = null, List<UrlSpecificRateLimit>? urlSpecific = null, HttpClient? client = null,
+            List<NamedClient>? namedClients = null, bool? defaultHttp = null)
         {
             if (duration != null)
                 Settings.GlobalDuration = duration;
@@ -30,7 +32,15 @@ namespace DR.Networking
                 Settings.UrlSpecificRateLimits = urlSpecific;
 
             if (client != null)
-                Main.Client = client;
+                Settings.Client = client;
+
+            if (namedClients != null)
+            {
+                if (namedClients.GroupBy(x => x.Name).Any(x => x.Count() > 1))
+                    throw new Exception($"You can't add multiple {nameof(NamedClient)}'s with the same name!");
+
+                Settings.NamedClients = namedClients;
+            }
 
             if (defaultHttp != null)
                 Settings.UseHttpsByDefault = defaultHttp != true;

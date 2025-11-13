@@ -25,7 +25,6 @@ namespace DR.Networking.Core
         internal static async Task Check(string url)
         {
             int? rateLimitTime = CheckIfRateLimitIsNeeded(url);
-
             if (rateLimitTime == null)
                 return;
             else
@@ -41,30 +40,30 @@ namespace DR.Networking.Core
         /// <returns></returns>
         private static int? CheckIfRateLimitIsNeeded(string url)
         {
-            var previousRequest = RequestHistory
+            RateLimitModel previousRequest = RequestHistory
                 .Where(x => x.Url == url)
                 .FirstOrDefault();
 
-            if (previousRequest != null)
+            if (previousRequest == null)
+                return null;
+
+            UrlSpecificRateLimit? urlSpecific = CheckUrlSpecificRateLimits(url, false);
+            urlSpecific ??= CheckUrlSpecificRateLimits(url, true);
+
+            // Check if request needs to be rate limited.
+            if (urlSpecific != null)
             {
-                UrlSpecificRateLimit? urlSpecific = CheckUrlSpecificRateLimits(url, false);
-                urlSpecific ??= CheckUrlSpecificRateLimits(url, true);
+                TimeSpan timeBetweenPreviousRequest = previousRequest.RequestDate - DateTime.Now;
 
-                // Check if request needs to be rate limited.
-                if (urlSpecific != null)
-                {
-                    TimeSpan timeBetweenPreviousRequest = previousRequest.RequestDate - DateTime.Now;
+                if (timeBetweenPreviousRequest < urlSpecific.Duration)
+                    return (timeBetweenPreviousRequest - urlSpecific.Duration).TotalMilliseconds.RoundUp();
+            }
+            else if (Settings.GlobalDuration != null)
+            {
+                TimeSpan timeBetweenPreviousRequest = previousRequest.RequestDate - DateTime.Now;
 
-                    if (timeBetweenPreviousRequest < urlSpecific.Duration)
-                        return (timeBetweenPreviousRequest - urlSpecific.Duration).TotalMilliseconds.RoundUp();
-                }
-                else if (Settings.GlobalDuration != null)
-                {
-                    TimeSpan timeBetweenPreviousRequest = previousRequest.RequestDate - DateTime.Now;
-
-                    if (timeBetweenPreviousRequest < Settings.GlobalDuration)
-                        return (timeBetweenPreviousRequest - (TimeSpan)Settings.GlobalDuration).TotalMilliseconds.RoundUp();
-                }
+                if (timeBetweenPreviousRequest < Settings.GlobalDuration)
+                    return (timeBetweenPreviousRequest - (TimeSpan)Settings.GlobalDuration).TotalMilliseconds.RoundUp();
             }
 
             return null;

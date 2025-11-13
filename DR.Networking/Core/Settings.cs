@@ -1,6 +1,7 @@
 ﻿using DR.Networking.Models;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace DR.Networking.Core
 {
@@ -22,5 +23,19 @@ namespace DR.Networking.Core
         /// that the library will check for on every request.
         /// </summary>
         internal static List<UrlSpecificRateLimit>? UrlSpecificRateLimits { get; set; } = null;
+
+        /// <summary>
+        /// The HttpClient used to make the requests.
+        /// </summary>
+        internal static HttpClient Client = new HttpClient(new StandardSocketsHttpHandler()
+        {
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(1),
+        });
+
+        /// <summary>
+        /// Allow users to pass custom HttpClients used for specific requests.
+        /// </summary>
+        internal static List<NamedClient> NamedClients = new List<NamedClient>();
     }
 }
