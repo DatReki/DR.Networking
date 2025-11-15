@@ -1,5 +1,7 @@
-﻿using DR.Networking.Models;
+﻿using DR.Networking.Core.Attributes;
+using DR.Networking.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,15 +13,26 @@ namespace DR.Networking.Core
     /// </summary>
     internal enum RequestTypes
     {
+        [Supported(true)]
         Get,
+        [Supported(false)]
         Head,
+        [Supported(true)]
         Post,
+        [Supported(true)]
         Put,
+        [Supported(true)]
         Delete,
+        [Supported(false)]
         Trace,
+        [Supported(false)]
         Options,
+        [Supported(false)]
         Connect,
-        Patch
+        [Supported(true)]
+        Patch,
+        [Supported(false)]
+        Unknown
     }
 
     /// <summary>
@@ -34,6 +47,11 @@ namespace DR.Networking.Core
     internal class Main
     {
         /// <summary>
+        /// A list of <see cref="RequestTypes"/> that are supported by the library.
+        /// </summary>
+        internal static List<RequestTypes> SupportedTypes { get; set; } = new List<RequestTypes>();
+
+        /// <summary>
         /// The base function for making a network request to a specific url.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -42,15 +60,30 @@ namespace DR.Networking.Core
         /// <param name="body"></param>
         /// <param name="headers"></param>
         /// <returns></returns>
-        internal static async Task<ResultData> RequestBase<T>(string url, RequestTypes requestType, T body, T headers, string? namedClient = null)
+        internal static async Task<ResultData> RequestBase<T>(HttpRequestMessage request, string? namedClient = null)
         {
+            HttpClient client;
+            if (string.IsNullOrWhiteSpace(namedClient))
+                client = Settings.Client;
+            else
+                client = Settings.NamedClients.FirstOrDefault(x => x.Name == namedClient).Client ?? Settings.Client;
+
+            string url = string.Empty;
+            if (request.RequestUri != null)
+                url = request.RequestUri.ToString();
+
             string baseAddress = string.Empty;
-            HttpClient client = Settings.NamedClients.FirstOrDefault(x => x.Name == namedClient).Client ?? Settings.Client;
-            
             if (client.BaseAddress != null)
                 baseAddress = client.BaseAddress.ToString();
 
-            if (string.IsNullOrWhiteSpace(baseAddress) && string.IsNullOrWhiteSpace(url))
+            string fullUrl = string.Empty;
+            if (!string.IsNullOrWhiteSpace(baseAddress))
+                fullUrl += baseAddress;
+
+            if (!string.IsNullOrWhiteSpace(url))
+                fullUrl += url;
+
+            if (string.IsNullOrWhiteSpace(fullUrl))
             {
                 return new ResultData()
                 {
@@ -61,44 +94,23 @@ namespace DR.Networking.Core
                 };
             }
 
-            string fullUrl = url;
-            if (!string.IsNullOrWhiteSpace(baseAddress))
-                fullUrl = baseAddress + url;
+            if (!request.Method.IsSupported(out RequestTypes requestType))
+            {
+                return new ResultData()
+                {
+                    Success = false,
+                    Url = fullUrl,
+                    Error = $"The selected HttpMethod '{request.Method}' is either not supported or not yet implemented",
+                    ErrorType = ErrorType.HttpMethodNotSupported,
+                };
+            }
 
             CheckUrlModel urlChecked = await Base.CheckUrl(fullUrl);
             if (urlChecked.Success)
             {
                 await RateLimiter.Check(fullUrl);
-
-                switch (requestType)
-                {
-                    case RequestTypes.Head:
-                        break;
-                    case RequestTypes.Post:
-                        break;
-                    case RequestTypes.Put:
-                        break;
-                    case RequestTypes.Delete:
-                        break;
-                    case RequestTypes.Trace:
-                        break;
-                    case RequestTypes.Options:
-                        break;
-                    case RequestTypes.Connect:
-                        break;
-                    case RequestTypes.Patch:
-                        break;
-                    case RequestTypes.Get:
-                        return CreateResult(fullUrl, await client.GetAsync(url));                        
-                }
-
-                return new ResultData()
-                {
-                    Success = false,
-                    Url = GetResultUrl(urlChecked.Url, fullUrl),
-                    Error = $"The selected request type: '{Enum.GetName(typeof(RequestTypes), requestType)}' is either not supported or not yet implemented",
-                    ErrorType = ErrorType.RequestTypeNotSupported,
-                };
+                HttpRequestMessage? clone = await request.Clone(fullUrl);
+                return CreateResult(fullUrl, request, await client.SendAsync(request));
             }
 
             return new ResultData()
@@ -110,15 +122,16 @@ namespace DR.Networking.Core
             };
         }
 
-        private static ResultData CreateResult(string url, HttpResponseMessage responseMessage)
+        private static ResultData CreateResult(string url, HttpRequestMessage? request, HttpResponseMessage response)
         {
             ResultData result = new ResultData()
             {
                 Success = true,
                 Url = url,
-                StatusCode = (int)responseMessage.StatusCode,
-                Content = responseMessage.Content,
-                Headers = responseMessage.Headers
+                StatusCode = (int)response.StatusCode,
+                Request = request,
+                Response = response,
+                Content = response.Content,
             };
 
             return result;

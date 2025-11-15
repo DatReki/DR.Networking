@@ -57,8 +57,9 @@ namespace ConsoleApp.Examples
             ];
 
             _ = new Configuration(namedClients: namedClients);
+            HttpRequestMessage request = new(HttpMethod.Get, url);
 
-            return await Request.Get(url, client.Name);
+            return await Request.Send(request, client.Name);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace DR.Networking
                 if (namedClients.GroupBy(x => x.Name).Any(x => x.Count() > 1))
                     throw new Exception($"You can't add multiple {nameof(NamedClient)}'s with the same name!");
 
-                Settings.NamedClients = namedClients;
+                Settings.NamedClients = namedClients.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList();
             }
 
             if (defaultHttp != null)

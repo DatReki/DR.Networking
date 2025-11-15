@@ -34,9 +34,9 @@ namespace DR.Networking.Models
         InvalidUrl,
 
         /// <summary>
-        /// The requested request type is either not supported or not yet implemented
+        /// The <see cref="HttpMethod"/> is either not supported or not yet implemented
         /// </summary>
-        RequestTypeNotSupported,
+        HttpMethodNotSupported,
     }
 
     /// <summary>
@@ -71,14 +71,19 @@ namespace DR.Networking.Models
         public ErrorType ErrorType { get; set; }
 
         /// <summary>
+        /// The full HTTP request message.
+        /// </summary>
+        public HttpRequestMessage? Request { get; set; } = null;
+
+        /// <summary>
+        /// The full HTTP response message if <see cref="Success"/> is true.
+        /// </summary>
+        public HttpResponseMessage? Response { get; set; } = null;
+
+        /// <summary>
         /// The response content of the request if <see cref="Success"/> is true.
         /// </summary>
         public HttpContent? Content { get; set; } = null;
-
-        /// <summary>
-        /// The response headers of the request.
-        /// </summary>
-        public HttpResponseHeaders? Headers { get; set; } = null;
 
     }
 }
