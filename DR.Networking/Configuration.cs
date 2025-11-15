@@ -17,7 +17,7 @@ namespace DR.Networking
         /// This value will be overwritten if the url called is in the <see cref="UrlSpecificRateLimit"/> list.
         /// </param>
         /// <param name="urlSpecific">A list of url/domain specific rate limit settings.</param>
-        /// <param name="client">Pass your own HttpClient for the library to use.</param>
+        /// <param name="client">Pass your own <see cref="HttpClient"/> for the library to use when no <see cref="NamedClient"/> is provided/found.</param>
         /// <param name="defaultHttp">
         /// By default if neither HTTP or HTTPS is provided at the start of the request url the library will use HTTPS. <br />
         /// If you pass true to this parameter the library will add HTTP by default to the request url.

@@ -44,6 +44,10 @@ namespace DR.Networking.Core
             // When the URL is a Uri check if it's valid.
             else if (Uri.TryCreate(url, UriKind.Absolute, out Uri newUrl))
             {
+                // Ignore domain check for localhost requests.
+                if (newUrl.Host == "localhost")
+                    return new CheckUrlModel(true, newUrl, null, ErrorType.None);
+
                 DomainParser domainParser = await GetDomainParser();
                 if (domainParser.IsValidDomain(newUrl.Host))
                 {
@@ -74,6 +78,7 @@ namespace DR.Networking.Core
                 }
                 else
                     return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
+
             }
             else
                 return new CheckUrlModel(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);

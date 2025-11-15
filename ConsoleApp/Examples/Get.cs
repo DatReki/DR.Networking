@@ -8,24 +8,14 @@ namespace ConsoleApp.Examples
     {
         internal static async Task NamedClientString()
         {
-            var client = Clients.CreateClient("test", new HttpClient()
-            {
-                BaseAddress = new Uri("https://github.com/DatReki/"),
-                Timeout = TimeSpan.FromSeconds(5)
-            });
-
-            Program.ShowResult(await ExampleCall("DR.Cache", client));
+            NamedClient client = await Backend.Main.CreateClient("test", new Backend.Models.HttpClientOptions(TimeSpan.FromSeconds(5)));
+            await Program.ShowResult(await ExampleCall("Get", client));
         }
 
         internal static async Task NamedClientType()
         {
-            var client = Clients.CreateClient<ExampleClass>(new HttpClient()
-            {
-                BaseAddress = new Uri("https://github.com/DatReki/"),
-                Timeout = TimeSpan.FromSeconds(5)
-            });
-
-            Program.ShowResult(await ExampleCall("DR.Cache", client));
+            NamedClient client = await Backend.Main.CreateClient<ExampleClass>(new Backend.Models.HttpClientOptions(TimeSpan.FromSeconds(5)));
+            await Program.ShowResult(await ExampleCall("Get", client));
         }
 
         internal static async Task InavlidUrl()
@@ -35,7 +25,7 @@ namespace ConsoleApp.Examples
                 Timeout = TimeSpan.FromSeconds(5)
             });
 
-            Program.ShowResult(await ExampleCall("12.4121.134", client));
+            await Program.ShowResult(await ExampleCall("12.4121.134", client));
         }
 
         internal static async Task NoUrl()
@@ -45,9 +35,8 @@ namespace ConsoleApp.Examples
                 Timeout = TimeSpan.FromSeconds(5)
             });
 
-            Program.ShowResult(await ExampleCall(string.Empty, client));
+            await Program.ShowResult(await ExampleCall(string.Empty, client));
         }
-
 
         private static async Task<ResultData> ExampleCall(string url, NamedClient client)
         {

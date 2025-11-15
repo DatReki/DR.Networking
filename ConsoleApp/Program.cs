@@ -88,14 +88,24 @@ namespace ConsoleApp
             return result;
         }
 
-        internal static void ShowResult(ResultData data)
+        internal static async Task ShowResult(ResultData data)
         {
+            Console.WriteLine(string.Empty);
             Console.WriteLine($"Request status: {data.Success}");
             Console.WriteLine($"Http status code: {data.StatusCode}");
             
-            if (!data.Success)
+            if (data.Success)
             {
-                Console.WriteLine($"Error type: {Enum.GetName(typeof(ErrorType), data.ErrorType)}");
+                if (data.Content != null)
+                {
+                    string content = await data.Content.ReadAsStringAsync();
+                    if (content.Length < 200)
+                        Console.WriteLine($"Content: {content}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Error type: {Enum.GetName(data.ErrorType)}");
                 Console.WriteLine($"Error type: {data.Error}");
             }
 

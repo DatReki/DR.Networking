@@ -69,21 +69,13 @@ namespace DR.Networking.Core
                 client = Settings.NamedClients.FirstOrDefault(x => x.Name == namedClient).Client ?? Settings.Client;
 
             string url = string.Empty;
-            if (request.RequestUri != null)
-                url = request.RequestUri.ToString();
-
-            string baseAddress = string.Empty;
             if (client.BaseAddress != null)
-                baseAddress = client.BaseAddress.ToString();
+                url += client.BaseAddress.ToString();
 
-            string fullUrl = string.Empty;
-            if (!string.IsNullOrWhiteSpace(baseAddress))
-                fullUrl += baseAddress;
+            if (request.RequestUri != null)
+                url += request.RequestUri.ToString();
 
-            if (!string.IsNullOrWhiteSpace(url))
-                fullUrl += url;
-
-            if (string.IsNullOrWhiteSpace(fullUrl))
+            if (string.IsNullOrWhiteSpace(url))
             {
                 return new ResultData()
                 {
@@ -99,24 +91,24 @@ namespace DR.Networking.Core
                 return new ResultData()
                 {
                     Success = false,
-                    Url = fullUrl,
+                    Url = url,
                     Error = $"The selected HttpMethod '{request.Method}' is either not supported or not yet implemented",
                     ErrorType = ErrorType.HttpMethodNotSupported,
                 };
             }
 
-            CheckUrlModel urlChecked = await Base.CheckUrl(fullUrl);
+            CheckUrlModel urlChecked = await Base.CheckUrl(url);
             if (urlChecked.Success)
             {
-                await RateLimiter.Check(fullUrl);
-                HttpRequestMessage? clone = await request.Clone(fullUrl);
-                return CreateResult(fullUrl, request, await client.SendAsync(request));
+                await RateLimiter.Check(url);
+                HttpRequestMessage? clone = await request.Clone(url);
+                return CreateResult(url, request, await client.SendAsync(request));
             }
 
             return new ResultData()
             {
                 Success = urlChecked.Success,
-                Url = GetResultUrl(urlChecked.Url, fullUrl),
+                Url = GetResultUrl(urlChecked.Url, url),
                 Error = urlChecked.Error,
                 ErrorType = urlChecked.ErrorType,
             };
