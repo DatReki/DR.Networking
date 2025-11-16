@@ -3,8 +3,13 @@ using System.Collections.ObjectModel;
 
 namespace Api
 {
-    internal class Data
+    public class Data
     {
+        /// <summary>
+        /// A list of users who can access specific endpoints
+        /// </summary>
+        public static List<ApiUser> ApiUsers { get; set; } = [];
+
         /// <summary>
         /// A list of <see cref="User"/>s that have been added through the API
         /// </summary>

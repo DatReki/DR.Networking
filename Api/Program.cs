@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Api
 {
     public class Program
@@ -9,6 +12,13 @@ namespace Api
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownIPNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
 
             var app = builder.Build();
 

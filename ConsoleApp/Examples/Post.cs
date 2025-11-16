@@ -2,7 +2,6 @@
 using DR.Networking;
 using DR.Networking.Models;
 using Newtonsoft.Json;
-using System;
 using System.Text;
 
 namespace ConsoleApp.Examples
@@ -25,7 +24,7 @@ namespace ConsoleApp.Examples
                 Content = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json")
             };
 
-            ResultData response =  await Request.Send(request, client.Name);
+            ResultData response = await Request.Send(request, client.Name);
             await Program.ShowResult(response);
         }
     }
