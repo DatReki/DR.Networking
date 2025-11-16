@@ -8,6 +8,7 @@ namespace ConsoleApp.Examples
     {
         internal static async Task NamedClientString()
         {
+            Backend.Generate.User();
             NamedClient client = await Backend.Main.CreateClient("test", new Backend.Models.HttpClientOptions(TimeSpan.FromSeconds(5)));
             await Program.ShowResult(await ExampleCall("Get", client));
         }
@@ -38,7 +39,7 @@ namespace ConsoleApp.Examples
             await Program.ShowResult(await ExampleCall(string.Empty, client));
         }
 
-        private static async Task<ResultData> ExampleCall(string url, NamedClient client)
+        internal static async Task<ResultData> ExampleCall(string url, NamedClient client)
         {
             List<NamedClient> namedClients =
             [

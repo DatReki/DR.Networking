@@ -1,3 +1,4 @@
+using Api.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -7,5 +8,9 @@ namespace Api.Controllers
         [HttpGet]
         public ContentResult Index()
             => Content("This is the result of the example GET request");
+
+        [HttpGet]
+        public List<User> GetUsers()
+            => [.. Data.Users];
     }
 }

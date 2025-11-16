@@ -4,6 +4,7 @@ namespace Api
     {
         public static void Main(string[] args)
         {
+            Data.Setup();
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
