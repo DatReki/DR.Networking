@@ -5,50 +5,30 @@ on:
     branches: [ '**', master ]
 
 jobs:
-  linux:
+  build:
+
     runs-on: ubuntu-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v2 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 10.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
 
-  macos:
-    runs-on: macos-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2 
+      uses: actions/checkout@v2
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: 6.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      
+    - name: Create JSON (Credentials)
+      id: create-json
+      uses: jsdaniell/create-json@v1.2.2
+      with:
+        name: "config.json"
+        json: ${{ secrets.CONFIG_JSON }}
+        dir: 'DRN-Console/bin/Debug/'
 
-  windows:
-    runs-on: windows-latest
-    steps:
-    - name: checkout
-      uses: actions/checkout@v2 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 10.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
