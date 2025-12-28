@@ -1,4 +1,4 @@
-﻿using Api.Models;
+﻿using Generate.Models;
 using System.Collections.ObjectModel;
 
 namespace Api
@@ -13,7 +13,7 @@ namespace Api
         /// <summary>
         /// A list of <see cref="User"/>s that have been added through the API
         /// </summary>
-        internal static ObservableCollection<User> Users { get; private set; } = [];
+        public static ObservableCollection<User> Users { get; private set; } = [];
 
         /// <summary>
         /// Configure everything required to use the <see cref="Data"/> class. Is only required to be called once on startup.

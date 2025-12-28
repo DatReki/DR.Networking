@@ -1,4 +1,5 @@
 ﻿using Api.Models;
+using Generate.Models;
 
 namespace Tests
 {

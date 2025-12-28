@@ -1,49 +1,42 @@
 ﻿using DR.Networking.Core;
 using DR.Networking.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 
 namespace DR.Networking
 {
     public class Configuration
     {
         /// <summary>
-        /// Pass a custom configuration for the library to use.
+        /// Initalize the library. You must call this class before utilizing the library.
         /// </summary>
-        /// <param name="duration">
-        /// A global ratelimit applied to all request. <br /> 
-        /// This value will be overwritten if the url called is in the <see cref="UrlSpecificRateLimit"/> list.
-        /// </param>
-        /// <param name="urlSpecific">A list of url/domain specific rate limit settings.</param>
-        /// <param name="client">Pass your own <see cref="HttpClient"/> for the library to use when no <see cref="NamedClient"/> is provided/found.</param>
-        /// <param name="defaultHttp">
-        /// By default if neither HTTP or HTTPS is provided at the start of the request url the library will use HTTPS. <br />
-        /// If you pass true to this parameter the library will add HTTP by default to the request url.
-        /// </param>
-        public Configuration(TimeSpan? duration = null, List<UrlSpecificRateLimit>? urlSpecific = null, HttpClient? client = null,
-            List<NamedClient>? namedClients = null, bool? defaultHttp = null)
+        /// <param name="options"></param>
+        /// <exception cref="Exception"></exception>
+        public Configuration(ConfigurationOptions options)
         {
-            if (duration != null)
-                Settings.GlobalDuration = duration;
+            Settings.ListenToChanges();
+            RateLimiter.ListenToChanges();
 
-            if (urlSpecific != null)
-                Settings.UrlSpecificRateLimits = urlSpecific;
+            if (options.GlobaRateLimit != null)
+                RateLimiting.UpdateGlobal((TimeSpan)options.GlobaRateLimit);
 
-            if (client != null)
-                Settings.Client = client;
+            if (options.UrlRateLimits != null)
+                RateLimiting.Add(options.UrlRateLimits);
 
-            if (namedClients != null)
+            if (options.BaseClient != null)
+                Settings.Client = options.BaseClient;
+
+            if (options.NamedClients != null)
             {
-                if (namedClients.GroupBy(x => x.Name).Any(x => x.Count() > 1))
+                if (options.NamedClients.GroupBy(x => x.Name).Any(x => x.Count() > 1))
                     throw new Exception($"You can't add multiple {nameof(NamedClient)}'s with the same name!");
 
-                Settings.NamedClients = namedClients.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList();
+                Settings.NamedClients.AddRange(options.NamedClients.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList());
             }
 
-            if (defaultHttp != null)
-                Settings.UseHttpsByDefault = defaultHttp != true;
+            Settings.CloneRequestMessage = options.CloneRequestMessage;
+            Settings.UseHttpsByDefault = options.UseHttpsByDefault;
+            Settings.ValidateUrl = options.ValidateUrl;
         }
     }
 }

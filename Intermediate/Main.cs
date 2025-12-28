@@ -1,8 +1,8 @@
-﻿using Backend.Models;
-using DR.Networking;
+﻿using DR.Networking;
 using DR.Networking.Models;
+using Intermediate.Models;
 
-namespace Backend
+namespace Intermediate
 {
     public class Main
     {

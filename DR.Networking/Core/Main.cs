@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DR.Networking.Core
@@ -15,7 +16,7 @@ namespace DR.Networking.Core
     {
         [Supported(true)]
         Get,
-        [Supported(false)]
+        [Supported(true)]
         Head,
         [Supported(true)]
         Post,
@@ -23,11 +24,11 @@ namespace DR.Networking.Core
         Put,
         [Supported(true)]
         Delete,
-        [Supported(false)]
+        [Supported(true)]
         Trace,
-        [Supported(false)]
+        [Supported(true)]
         Options,
-        [Supported(false)]
+        [Supported(true)]
         Connect,
         [Supported(true)]
         Patch,
@@ -35,49 +36,34 @@ namespace DR.Networking.Core
         Unknown
     }
 
-    /// <summary>
-    /// HTTP protocols.
-    /// </summary>
-    internal enum Protocol
-    {
-        Https,
-        Http
-    }
-
     internal class Main
     {
         /// <summary>
         /// A list of <see cref="RequestTypes"/> that are supported by the library.
         /// </summary>
-        internal static List<RequestTypes> SupportedTypes { get; set; } = new List<RequestTypes>();
+        internal static readonly List<RequestTypes> SupportedTypes = GetSupportedTypes();
 
         /// <summary>
         /// The base function for making a network request to a specific url.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="url"></param>
-        /// <param name="requestType"></param>
-        /// <param name="body"></param>
-        /// <param name="headers"></param>
+        /// <param name="request"></param>
+        /// <param name="namedClient"></param>
         /// <returns></returns>
-        internal static async Task<ResultData> RequestBase<T>(HttpRequestMessage request, string? namedClient = null)
+        internal static async Task<Result> RequestBase<T>(HttpRequestMessage request, string? namedClient = null)
         {
             HttpClient client;
             if (string.IsNullOrWhiteSpace(namedClient))
                 client = Settings.Client;
             else
-                client = Settings.NamedClients.FirstOrDefault(x => x.Name == namedClient).Client ?? Settings.Client;
+                client = Settings.NamedClients.FirstOrDefault(x => x.Name == namedClient)?.Client ?? Settings.Client;
 
-            string url = string.Empty;
-            if (client.BaseAddress != null)
-                url += client.BaseAddress.ToString();
-
-            if (request.RequestUri != null)
-                url += request.RequestUri.ToString();
+            Uri? uri = BuildUri(client.BaseAddress, request.RequestUri);
+            string url = uri?.ToString() ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(url))
             {
-                return new ResultData()
+                return new Result()
                 {
                     Success = false,
                     Url = string.Empty,
@@ -86,9 +72,9 @@ namespace DR.Networking.Core
                 };
             }
 
-            if (!request.Method.IsSupported(out RequestTypes requestType))
+            if (!request.Method.IsSupported())
             {
-                return new ResultData()
+                return new Result()
                 {
                     Success = false,
                     Url = url,
@@ -97,33 +83,66 @@ namespace DR.Networking.Core
                 };
             }
 
-            CheckUrlModel urlChecked = await Base.CheckUrl(url);
-            if (urlChecked.Success)
+            if (Settings.ValidateUrl)
             {
-                await RateLimiter.Check(url);
-                HttpRequestMessage? clone = await request.Clone(url);
-                return CreateResult(url, request, await client.SendAsync(request));
+                CheckUrlModel urlChecked = await Base.CheckUrl(url);
+                if (urlChecked.Success)
+                {
+                    // Since we fixed any problems with the url in the 'CheckUrl' function we will now use this full url.
+                    request.RequestUri = urlChecked.Url;
+                }
+                else
+                {
+                    return new Result()
+                    {
+                        Url = GetResultUrl(urlChecked.Url, url),
+                        Error = urlChecked.Error,
+                        ErrorType = urlChecked.ErrorType,
+                    };
+                }
             }
+            else
+                request.RequestUri = uri;
 
-            return new ResultData()
-            {
-                Success = urlChecked.Success,
-                Url = GetResultUrl(urlChecked.Url, url),
-                Error = urlChecked.Error,
-                ErrorType = urlChecked.ErrorType,
-            };
+            await RateLimiter.Check(request.RequestUri);
+            if (Settings.CloneRequestMessage)
+                return CreateResult(await request.Clone(request.RequestUri), await client.SendAsync(request));
+            else
+                return CreateResult(null, await client.SendAsync(request));
         }
 
-        private static ResultData CreateResult(string url, HttpRequestMessage? request, HttpResponseMessage response)
+        /// <summary>
+        /// Try and build one valid <see cref="Uri"/> from the 'HttpClient.BaseAddress' & 'HttpRequestMessage.RequestUri'.
+        /// </summary>
+        /// <param name="baseAddress"></param>
+        /// <param name="requestUri"></param>
+        /// <returns></returns>
+        private static Uri? BuildUri(Uri? baseAddress, Uri? requestUri)
         {
-            ResultData result = new ResultData()
+            if (baseAddress == null && requestUri == null)
+                return null;
+
+            // Don't use the 'baseAddress' if the 'requestUri' is already an absolute uri.
+            if (requestUri != null && requestUri.IsAbsoluteUri)
+                return requestUri;
+
+            if (baseAddress != null)
             {
-                Success = true,
-                Url = url,
-                StatusCode = (int)response.StatusCode,
+                if (requestUri != null)
+                    return new Uri(baseAddress, requestUri);
+                else
+                    return baseAddress;
+            }
+
+            return requestUri;
+        }
+
+        private static Result CreateResult(HttpRequestMessage? request, HttpResponseMessage response)
+        {
+            Result result = new Result()
+            {
                 Request = request,
                 Response = response,
-                Content = response.Content,
             };
 
             return result;
@@ -140,6 +159,28 @@ namespace DR.Networking.Core
                 return url;
             else
                 return url;
+        }
+
+        private static List<RequestTypes> GetSupportedTypes()
+        {
+            List<RequestTypes> result = new List<RequestTypes>();
+            Type rType = typeof(RequestTypes);
+            Type sType = typeof(Supported);
+
+            IEnumerable<MemberInfo> members = rType.GetMembers()
+                .Where(x => x.DeclaringType == rType && x.GetCustomAttributes(sType, false).Length > 0);
+
+            foreach (MemberInfo member in members)
+            {
+                object? attr = member.GetCustomAttributes(sType, false).FirstOrDefault();
+                if (attr != null && ((Supported)attr).IsSupported)
+                {
+                    if (Enum.TryParse(member.Name, true, out RequestTypes supported) && !result.Contains(supported))
+                        result.Add(supported);
+                }
+            }
+
+            return result;
         }
     }
 }

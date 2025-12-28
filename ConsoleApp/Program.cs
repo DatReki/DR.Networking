@@ -1,4 +1,5 @@
-﻿using DR.Networking.Models;
+﻿using Backend;
+using DR.Networking.Models;
 using System.Reflection;
 
 namespace ConsoleApp
@@ -12,15 +13,11 @@ namespace ConsoleApp
             Console.ForegroundColor = ConsoleColor.Gray;
             await SelectOption();
 
-            int counter = 0;
-            while(counter <= 100)
+            while(true)
             {
                 await Task.Delay(10);
-
                 if (Finished)
                     break;
-                else
-                    counter++;
             }
 
             Console.WriteLine(string.Empty);
@@ -48,7 +45,7 @@ namespace ConsoleApp
             for (int i = 0; i < classes.Count; i++)
                 Console.WriteLine($"[{i}] {classes[i].Name}");
 
-            var selectedType = ReadUserInput(Console.ReadLine(), classes.Select(x => x.Name));
+            int selectedType = ReadUserInput(Console.ReadLine(), classes.Select(x => x.Name));
             if (selectedType == -1)
             {
                 await Restart();
@@ -66,7 +63,7 @@ namespace ConsoleApp
             for (int i = 0; i < methods.Count; i++)
                 Console.WriteLine($"[{i}]: {methods[i].Name}");
 
-            var selectedMethod = ReadUserInput(Console.ReadLine(), methods.Select(x => x.Name));
+            int selectedMethod = ReadUserInput(Console.ReadLine(), methods.Select(x => x.Name));
             if (selectedMethod == -1)
             {
                 await Restart();
@@ -75,7 +72,7 @@ namespace ConsoleApp
             else
                 Console.WriteLine(string.Empty);
 
-            var method = methods[selectedMethod];
+            MethodInfo method = methods[selectedMethod];
             method.Invoke(classes[selectedType], null);
         }
 
@@ -88,19 +85,30 @@ namespace ConsoleApp
             return result;
         }
 
-        internal static async Task ShowResult(ResultData data)
+        internal static async Task ShowResult(Result data)
         {
             Console.WriteLine(string.Empty);
             Console.WriteLine($"Request status: {data.Success}");
             Console.WriteLine($"Http status code: {data.StatusCode}");
-            
+
+            if (data.Request?.Content != null)
+            {
+                string requestBody = await data.Request.Content.ReadAsStringAsync();
+                if (Tools.TryGetFormattedJson(requestBody, out string json))
+                    Console.WriteLine($"Request body:\n{json}");
+                else if (Tools.TryGetFormattedXml(requestBody, out string xml))
+                    Console.WriteLine($"Request body:\n{xml}");
+                else
+                    Console.WriteLine($"Request body:\n{requestBody}");
+            }
+
             if (data.Success)
             {
                 if (data.Content != null)
                 {
                     string content = await data.Content.ReadAsStringAsync();
                     if (content.Length < 200)
-                        Console.WriteLine($"Content: {content}");
+                        Console.WriteLine($"Response body:\n{content}");
                 }
             }
             else

@@ -1,4 +1,6 @@
-﻿using Api.Models;
+﻿using Api.Core.Extensions;
+using Api.Models;
+using Generate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Net;

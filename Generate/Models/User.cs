@@ -1,7 +1,20 @@
-﻿namespace Api.Models
+﻿using Bogus;
+
+namespace Generate.Models
 {
     public class User
     {
+        public User() { }
+
+        public User(Faker faker)
+        {
+            Personal personal = new(faker);
+            Username = faker.Internet.UserName(personal.Firstname, personal.Lastname);
+            Password = faker.Internet.Password(Main.RandomNumber(10, 64));
+            Email = faker.Internet.Email();
+            PersonalInformation = personal;
+        }
+
         public enum GenderType
         {
             Male,
@@ -17,6 +30,22 @@
 
         public class Personal
         {
+            public Personal() { }
+
+            public Personal(Faker faker)
+            {
+                Firstname = faker.Person.FirstName;
+                Lastname = faker.Person.LastName;
+                Gender = faker.PickRandom<GenderType>();
+                Country = faker.Address.Country();
+                CountryCode = faker.Address.CountryCode();
+                State = faker.Address.State();
+                City = faker.Address.City();
+                Street = faker.Address.StreetName();
+                BuildingNumber = faker.Address.BuildingNumber();
+                ZipCode = faker.Address.ZipCode();
+            }
+
             public string Firstname { get; set; } = string.Empty;
             public string Surname { get; set; } = string.Empty;
             public string Lastname { get; set; } = string.Empty;

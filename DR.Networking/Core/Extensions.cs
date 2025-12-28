@@ -1,6 +1,6 @@
-﻿using DR.Networking.Core.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -16,8 +16,16 @@ namespace DR.Networking.Core
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static int RoundUp(this double value)
-            => Convert.ToInt32(Math.Round(value, MidpointRounding.AwayFromZero));
+        internal static double RoundUp(this double value)
+            => Math.Ceiling(value);
+
+        /// <summary>
+        /// Round the double value down to the nearest integer.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static double RoundDown(this double value)
+            => Math.Floor(value);
 
         /// <summary>
         /// Get the name for a <see cref="Models.NamedClient"/> from <see cref="MemberInfo"/>.
@@ -26,7 +34,7 @@ namespace DR.Networking.Core
         /// <returns></returns>
         internal static string GetClientName(this MemberInfo info)
         {
-            string name = info.ToString();
+            string name = info.ToString() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(name))
                 name = info.Name;
 
@@ -51,8 +59,10 @@ namespace DR.Networking.Core
                 result = RequestTypes.Post;
             else if (method == HttpMethod.Put)
                 result = RequestTypes.Put;
+#if (NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER)
             else if (method == HttpMethod.Patch)
                 result = RequestTypes.Patch;
+#endif
             else if (method == HttpMethod.Delete)
                 result = RequestTypes.Delete;
             else if (method == HttpMethod.Head)
@@ -61,6 +71,10 @@ namespace DR.Networking.Core
                 result = RequestTypes.Options;
             else if (method == HttpMethod.Trace)
                 result = RequestTypes.Trace;
+#if NET8_0_OR_GREATER
+            else if (method == HttpMethod.Connect)
+                result = RequestTypes.Connect;
+#endif
             else
                 result = RequestTypes.Unknown;
 
@@ -75,44 +89,26 @@ namespace DR.Networking.Core
         /// <returns></returns>
         internal static bool IsSupported(this HttpMethod method, out RequestTypes requestType)
         {
-            RequestTypes found = method.GetRequestType();
-            requestType = found;
+            RequestTypes type = method.GetRequestType();
+            requestType = type;
 
-            if (!Main.SupportedTypes.Any())
-            {
-                try
-                {
-                    Type rType = typeof(RequestTypes);
-                    Type sType = typeof(Supported);
-
-                    IEnumerable<MemberInfo> members = rType.GetMembers()
-                        .Where(x => x.DeclaringType == rType && x.GetCustomAttributes(sType, false).Length > 0);
-
-                    foreach (var member in members)
-                    {
-                        object attr = member.GetCustomAttributes(sType, false).FirstOrDefault();
-                        if (attr != null && ((Supported)attr).IsSupported)
-                        {
-                            if (Enum.TryParse(member.Name, true, out RequestTypes supported))
-                                Main.SupportedTypes.Add(supported);
-                        }
-                    }
-                }
-                catch
-                {
-
-                }
-            }
-
-            return Main.SupportedTypes.Any(x => x == found);
+            return Main.SupportedTypes.Any(x => x == type);
         }
+
+        /// <summary>
+        /// Check if the provided <see cref="HttpMethod"/> is supported by the library
+        /// </summary>
+        /// <param name="method"></param>
+        /// <returns></returns>
+        internal static bool IsSupported(this HttpMethod method)
+            => IsSupported(method, out _);
 
         /// <summary>
         /// Clone the <see cref="HttpRequestMessage"/> so that it can be used after the request has happend.
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        internal static async Task<HttpRequestMessage?> Clone(this HttpRequestMessage request, string url = "")
+        internal static async Task<HttpRequestMessage?> Clone(this HttpRequestMessage request, Uri? url = null)
         {
             HttpRequestMessage? clone = null;
 
@@ -128,7 +124,7 @@ namespace DR.Networking.Core
                     clone.Content = new StreamContent(ms);
 
                     // Copy the content headers
-                    foreach (var h in request.Content.Headers)
+                    foreach (KeyValuePair<string, IEnumerable<string>> h in request.Content.Headers)
                         clone.Content.Headers.Add(h.Key, h.Value);
                 }
 
@@ -136,8 +132,8 @@ namespace DR.Networking.Core
                 foreach (KeyValuePair<string, IEnumerable<string>> header in request.Headers)
                     clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-                if (!string.IsNullOrWhiteSpace(url))
-                    clone.RequestUri = new Uri(url);
+                if (url != null)
+                    clone.RequestUri = url;
             }
             catch
             {
@@ -145,6 +141,49 @@ namespace DR.Networking.Core
             }
 
             return clone;
+        }
+
+        /// <summary>
+        /// Add a range of items to a <see cref="ObservableCollection{T}"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="items"></param>
+        internal static void AddRange<T>(this ObservableCollection<T> collection, List<T> items)
+        {
+            for (int i = 0; i < items.Count; i++)
+                collection.Add(items[i]);
+        }
+
+        /// <summary>
+        /// Remove any double '/' characters from a string. <br />
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <returns></returns>
+        internal static Uri RemoveDoubleSlashes(this Uri uri)
+            => new(CompiledRegex.DoubleSlashes.Replace(uri.ToString(), @"/"));
+
+        /// <summary>
+        /// Inserts a list of elements into the <see cref="ObservableCollection{T}"/> starting at the specified index.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="index"></param>
+        /// <param name="items"></param>
+        internal static void InsertRange<T>(this ObservableCollection<T> collection, int index, List<T> items)
+        {
+            try
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    collection.Insert(index, items[i]);
+                    index++;
+                }
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

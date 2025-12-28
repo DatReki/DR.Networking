@@ -1,17 +1,17 @@
-﻿using Backend.Models;
+﻿using Intermediate.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.NetworkInformation;
 
-namespace Backend
+namespace Intermediate
 {
     public class InternalApi
     {
         /// <summary>
-        /// A lot of ports we're already using.
+        /// A list of the ports we're already using.
         /// </summary>
-        internal static List<int> UsedPorts { get; private set; } = [];
+        public static List<int> UsedPorts { get; private set; } = [];
 
         /// <summary>
         /// Create a new HTTP client which utilizes the <see cref="Api"/> project.
@@ -30,7 +30,7 @@ namespace Backend
             HttpClient client = api.CreateClient();
             if (options.DefaultHeaders != null)
             {
-                foreach (var header in options.DefaultHeaders)
+                foreach (KeyValuePair<string, string> header in options.DefaultHeaders)
                     client.DefaultRequestHeaders.Add(header.Key, header.Value);
             }
 

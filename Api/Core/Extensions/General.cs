@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Primitives;
 
-namespace Api.Core
+namespace Api.Core.Extensions
 {
-    internal static class Extensions
+    internal static class General
     {
         /// <summary>
         /// Try and get a single <see cref="string"/> value from a specific header

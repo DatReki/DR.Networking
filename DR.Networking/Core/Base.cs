@@ -2,6 +2,7 @@
 using Nager.PublicSuffix;
 using Nager.PublicSuffix.RuleProviders;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -10,9 +11,16 @@ namespace DR.Networking.Core
 {
     internal class Base
     {
-        internal static DateTime SuffixUpdated { get; private set; } = DateTime.MinValue;
+        internal static long SuffixTimestamp { get; private set; } = 0;
         internal static BaseRuleProvider? RuleProvider { get; private set; }
         internal static DomainParser? DomainParser { get; private set; }
+
+        internal enum HostType
+        {
+            Unknown,
+            Domain,
+            Ip,
+        }
 
         /// <summary>
         /// Check if a URL has a valid format.
@@ -21,91 +29,91 @@ namespace DR.Networking.Core
         /// <returns></returns>
         internal static async Task<CheckUrlModel> CheckUrl(string url)
         {
-            // When the URL is a IPv4 or IPv6 address check if it's valid.
-            if (IPAddress.TryParse(url, out IPAddress address))
+            if (TryCreateUri(url, UriKind.Absolute, out Uri? newUrl) && newUrl != null)
             {
-                (_, string protocolValue) = GetHttpProtocol(url);
-                switch (address.AddressFamily)
+                switch (newUrl.HostNameType)
                 {
-                    case AddressFamily.InterNetwork: // IPv4
-                        if (Uri.TryCreate(protocolValue + address.ToString(), UriKind.RelativeOrAbsolute, out Uri newUrl))
-                            return new CheckUrlModel(true, newUrl, null, ErrorType.None);
-                        else
-                            return new CheckUrlModel(false, null, "Was unable to parse url to a IPv4 address.", ErrorType.InvalidIpAddress);
-                    case AddressFamily.InterNetworkV6: // IPv6
-                        if (Uri.TryCreate(protocolValue + $"[{address}]", UriKind.RelativeOrAbsolute, out newUrl))
-                            return new CheckUrlModel(true, newUrl, null, ErrorType.None);
-                        else
-                            return new CheckUrlModel(false, null, "Was unable to parse url to a IPv6 address.", ErrorType.InvalidIpAddress);
-                    default:
-                        return new CheckUrlModel(false, null, "Was unable to parse url to either a IPv4 or IPv6 address.", ErrorType.InvalidIpAddress);
-                }
-            }
-            // When the URL is a Uri check if it's valid.
-            else if (Uri.TryCreate(url, UriKind.Absolute, out Uri newUrl))
-            {
-                // Ignore domain check for localhost requests.
-                if (newUrl.Host == "localhost")
-                    return new CheckUrlModel(true, newUrl, null, ErrorType.None);
-
-                DomainParser domainParser = await GetDomainParser();
-                if (domainParser.IsValidDomain(newUrl.Host))
-                {
-                    DomainInfo? domainInfo = domainParser.Parse(newUrl.Host);
-
-                    // Technically a redundant check.
-                    if (domainInfo == null)
-                        return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
-
-                    try
-                    {
-                        Dns.GetHostEntry(domainInfo.RegistrableDomain);
+                    case UriHostNameType.IPv4:
+                    case UriHostNameType.IPv6:
                         return new CheckUrlModel(true, newUrl, null, ErrorType.None);
-                    }
-                    catch (Exception ex)
-                    {
-                        ErrorType errorType = ErrorType.InvalidHostname;
+                    case UriHostNameType.Basic:
+                    case UriHostNameType.Dns:
+                        {
+                            // Ignore domain check for localhost requests.
+                            if (newUrl.Host == "localhost")
+                                return new CheckUrlModel(true, newUrl, null, ErrorType.None);
 
-                        if (ex is ArgumentOutOfRangeException)
-                            return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is longer than 255 characters.", errorType);
-                        else if (ex is SocketException)
-                            return new CheckUrlModel(false, null, $"Encountered an error when trying to resolve the hostname ({domainInfo.RegistrableDomain}).", errorType);
-                        else if (ex is ArgumentException)
-                            return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is invalid.", errorType);
-                        else
-                            return new CheckUrlModel(false, null, $"Something went wrong  while trying to parse the hostname ({domainInfo.RegistrableDomain}).", errorType);
-                    }
+                            DomainParser domainParser = await GetDomainParser();
+                            if (domainParser.IsValidDomain(newUrl.Host))
+                            {
+                                DomainInfo? domainInfo = domainParser.Parse(newUrl.Host);
+
+                                // Technically a redundant check.
+                                if (domainInfo == null)
+                                    return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
+
+                                try
+                                {
+                                    if (string.IsNullOrWhiteSpace(domainInfo.RegistrableDomain))
+                                        return new CheckUrlModel(false, null, "The provided hostname is empty.", ErrorType.InvalidHostname);
+
+                                    Dns.GetHostEntry(domainInfo.RegistrableDomain);
+                                    return new CheckUrlModel(true, newUrl, null, ErrorType.None);
+                                }
+                                catch (Exception ex)
+                                {
+                                    ErrorType errorType = ErrorType.InvalidHostname;
+
+                                    if (ex is ArgumentOutOfRangeException)
+                                        return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is longer than 255 characters.", errorType);
+                                    else if (ex is SocketException)
+                                        return new CheckUrlModel(false, null, $"Encountered an error when trying to resolve the hostname ({domainInfo.RegistrableDomain}).", errorType);
+                                    else if (ex is ArgumentException)
+                                        return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is invalid.", errorType);
+                                    else
+                                        return new CheckUrlModel(false, null, $"Something went wrong  while trying to parse the hostname ({domainInfo.RegistrableDomain}).", errorType);
+                                }
+                            }
+                            else
+                                return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
+                        }
+                    default:
+                        return new CheckUrlModel(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
                 }
-                else
-                    return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
-
             }
             else
                 return new CheckUrlModel(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
         }
 
         /// <summary>
-        /// Get the HTTP protocol used in the url.
+        /// Try and create a valid <see cref="Uri"/>
         /// </summary>
         /// <param name="url"></param>
+        /// <param name="kind"></param>
+        /// <param name="uri"></param>
+        /// <param name="hostType">If the host of the new <see cref="Uri"/> is a domain or a <see cref="IPAddress"/></param>
         /// <returns></returns>
-        private static (Protocol protocol, string value) GetHttpProtocol(string url)
+        private static bool TryCreateUri(string url, UriKind kind, out Uri? uri)
         {
-            string http = "http://";
-            string https = "https://";
-
-            switch (url)
+            if (kind == UriKind.Absolute)
             {
-                case string a when a.StartsWith(http):
-                    return (Protocol.Http, http);
-                case string b when b.StartsWith(https):
-                    return (Protocol.Https, https);
-                default:
+                // Turn a IPV6 address into a valid url.
+                if (IPAddress.TryParse(url, out IPAddress? address) && address != null && address.AddressFamily == AddressFamily.InterNetworkV6)
+                    url = $"[{url}]";
+
+                string http = "http://";
+                string https = "https://";
+
+                if (!url.StartsWith(http) && !url.StartsWith(https))
+                {
                     if (Settings.UseHttpsByDefault)
-                        return (Protocol.Https, https);
+                        url = https + url;
                     else
-                        return (Protocol.Http, http);
+                        url = http + url;
+                }
             }
+
+            return Uri.TryCreate(url, kind, out uri);
         }
 
         /// <summary>
@@ -116,10 +124,10 @@ namespace DR.Networking.Core
         /// <returns></returns>
         private static async Task<DomainParser> GetDomainParser()
         {
-            if ((DomainParser == null || RuleProvider == null) || (DateTime.Now - SuffixUpdated).TotalDays >= 1)
+            if ((DomainParser == null || RuleProvider == null) || SuffixTimestamp == 0 || Tools.Stopwatch.GetElapsedTime(SuffixTimestamp).TotalDays >= 1)
             {
                 var httpProvider = new SimpleHttpRuleProvider();
-                var build = await httpProvider.BuildAsync();
+                bool build = await httpProvider.BuildAsync();
                 if (build)
                     RuleProvider = httpProvider;
 
@@ -133,7 +141,7 @@ namespace DR.Networking.Core
                 }
 
                 DomainParser = new DomainParser(RuleProvider);
-                SuffixUpdated = DateTime.Now;
+                SuffixTimestamp = Stopwatch.GetTimestamp();
             }
 
             return DomainParser;

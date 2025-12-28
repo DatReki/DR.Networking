@@ -1,4 +1,4 @@
-﻿namespace Backend.Models
+﻿namespace Intermediate.Models
 {
     /// <summary>
     /// A model containing the options which can be used when creating a new <see cref="HttpClient"/>

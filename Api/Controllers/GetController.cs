@@ -1,12 +1,17 @@
 using Api.Core.Attributes;
 using Api.Models;
+using Generate;
+using Generate.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net;
 using System.Web;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 
 namespace Api.Controllers
 {
-    public class GetController : Controller
+    public class GetController : BaseController
     {
         [HttpGet]
         public ContentResult Index()
@@ -58,6 +63,38 @@ namespace Api.Controllers
                 email = HttpUtility.UrlDecode(email);
 
             return Result(true, string.Empty, HttpStatusCode.BadRequest);
+        }
+
+        [HttpGet]
+        public int RandomNumber()
+            => Main.RandomNumber();
+
+        [HttpGet]
+        public string RandomString()
+            => Main.RandomString(0, 10000);
+
+        [HttpGet]
+        public string RandomText()
+            => Main.RandomText(0, 100);
+
+        [HttpGet]
+        public string RandomJson()
+            => JsonConvert.SerializeObject(Main.RandomVehicles(0, 50));
+
+        [HttpGet]
+        public string RandomXml()
+        {
+            XDocument xdoc = new(new XDeclaration("1.0", "utf-8", "yes"));
+
+            using (var writer = xdoc.CreateWriter())
+            {
+                List<Vehicle> vehicles = Main.RandomVehicles(0, 50);
+                XmlSerializer x = new(vehicles.GetType());
+
+                x.Serialize(writer, vehicles);
+            }
+
+            return xdoc.ToString();
         }
     }
 }

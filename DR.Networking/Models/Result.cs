@@ -41,23 +41,61 @@ namespace DR.Networking.Models
     /// <summary>
     /// Contains the data about the result of the request.
     /// </summary>
-    public class ResultData
+    public class Result
     {
+#pragma warning disable IDE1006 // Naming Styles
+        private bool success { get; set; } = false;
+        private string url { get; set; } = string.Empty;
+        private int statusCode { get; set; } = -1;
+        private HttpContent? content { get; set; } = null;
+#pragma warning restore IDE1006 // Naming Styles
+
         /// <summary>
         /// Indicates if the request was successful.
         /// </summary>
-        public bool Success { get; set; } = false;
+        public bool Success
+        {
+            get
+            {
+                if (Response != null)
+                    return Response.IsSuccessStatusCode;
+                else
+                    return success;
+            }
+            set => success = value;
+        }
 
         /// <summary>
         /// The url to which the request was made.
         /// </summary>
-        public string Url { get; set; } = string.Empty;
+        public string Url
+        {
+            get
+            {
+                string requestUri = Request?.RequestUri?.ToString() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(requestUri))
+                    return requestUri;
+                else
+                    return url;
+            }
+            set => url = value;
+        }
 
         /// <summary>
         /// The HTTP status code associated with the request. <br />
         /// Will return -1 if the url used for the request is invalid.
         /// </summary>
-        public int StatusCode { get; set; } = -1;
+        public int StatusCode
+        {
+            get
+            {
+                if (Response != null)
+                    return (int)Response.StatusCode;
+                else
+                    return statusCode;
+            }
+            set => statusCode = value;
+        }
 
         /// <summary>
         /// The error explaining what went wrong during the request if <see cref="Success"/> is false.
@@ -82,7 +120,16 @@ namespace DR.Networking.Models
         /// <summary>
         /// The response content of the request if <see cref="Success"/> is true.
         /// </summary>
-        public HttpContent? Content { get; set; } = null;
-
+        public HttpContent? Content
+        {
+            get
+            {
+                if (Response != null)
+                    return Response.Content;
+                else
+                    return content;
+            }
+            set => content = value;
+        }
     }
 }

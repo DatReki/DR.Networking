@@ -43,6 +43,13 @@ namespace DR.Networking
             => Settings.NamedClients.FirstOrDefault(x => x.Name == typeof(T).Name);
 
         /// <summary>
+        /// Get a list of <see cref="NamedClient"/>s that have been added to the library.
+        /// </summary>
+        /// <returns></returns>
+        public static List<string> GetClientNames()
+            => Settings.NamedClients.Select(x => x.Name).ToList();
+
+        /// <summary>
         /// Try and get a <see cref="NamedClient"/> you have added to the library.
         /// </summary>
         /// <param name="name"></param>
@@ -89,17 +96,28 @@ namespace DR.Networking
         }
 
         /// <summary>
-        /// Get a list of <see cref="NamedClient"/>s that have been added to the library.
+        /// Try to add multiple <see cref="NamedClient"/>'s to the library.
         /// </summary>
-        /// <returns></returns>
-        public static List<string> GetClientNames()
-            => Settings.NamedClients.Select(x => x.Name).ToList();
+        /// <param name="clients"></param>
+        /// <returns><see cref="true"/> if any client was added otherwise <see cref="false"/>.</returns>
+        public static bool Add(List<NamedClient> clients)
+        {
+            bool result = false;
+            foreach (NamedClient client in clients)
+            {
+                bool added = Add(client);
+                if (!result && added)
+                    result = true;
+            }
+
+            return result;
+        }
 
         /// <summary>
-        /// Try to add a <see cref="NamedClient"/> to the library.
+        /// Try to add a single <see cref="NamedClient"/> to the library.
         /// </summary>
         /// <param name="client"></param>
-        /// <returns><see cref="true"/> if the client can be added. <see cref="false"/> if a client with the same name has already been added to the library or the client name is empty.</returns>
+        /// <returns><see cref="true"/> if the client was added otherwise <see cref="false"/>.</returns>
         public static bool Add(NamedClient client)
         {
             bool result = false;
@@ -109,6 +127,45 @@ namespace DR.Networking
             if (!Settings.NamedClients.Any(x => x.Name == client.Name))
             {
                 Settings.NamedClients.Add(client);
+                result = true;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Try to remove multiple <see cref="NamedClient"/>'s from the library.
+        /// </summary>
+        /// <param name="clients"></param>
+        /// <returns><see cref="true"/> if any client has been removed otherwise <see cref="false"/>.</returns>
+        public static bool Remove(List<NamedClient> clients)
+        {
+            bool result = false;
+            foreach (NamedClient client in clients)
+            {
+                bool added = Remove(client);
+                if (!result && added)
+                    result = true;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Try to remove a <see cref="NamedClient"/> from the library.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns><see cref="true"/> if the client has been removed otherwise <see cref="false"/>.</returns>
+        public static bool Remove(NamedClient client)
+        {
+            bool result = false;
+            if (string.IsNullOrWhiteSpace(client.Name))
+                return result;
+
+            NamedClient? found = Settings.NamedClients.FirstOrDefault(x => x.Name == client.Name);
+            if (found != null)
+            {
+                Settings.NamedClients.Remove(found);
                 result = true;
             }
 

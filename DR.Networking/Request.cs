@@ -12,7 +12,7 @@ namespace DR.Networking
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public static async Task<ResultData> Send(HttpRequestMessage request)
+        public static async Task<Result> Send(HttpRequestMessage request)
             => await Main.RequestBase<string?>(request, string.Empty);
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace DR.Networking
         /// <param name="request"></param>
         /// <param name="clientName"></param>
         /// <returns></returns>
-        public static async Task<ResultData> Send(HttpRequestMessage request, string clientName)
+        public static async Task<Result> Send(HttpRequestMessage request, string clientName)
             => await Main.RequestBase<string?>(request, clientName);
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace DR.Networking
         /// <typeparam name="T"></typeparam>
         /// <param name="request"></param>
         /// <returns></returns>
-        public static async Task<ResultData> Send<T>(HttpRequestMessage request)
+        public static async Task<Result> Send<T>(HttpRequestMessage request)
             => await Main.RequestBase<string?>(request, typeof(T).GetClientName());
     }
 }
