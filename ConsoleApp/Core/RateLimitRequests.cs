@@ -1,4 +1,5 @@
 ﻿using DR.Networking;
+using DR.Networking.Core;
 using DR.Networking.Models;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ namespace ConsoleApp.Core
             Console.WriteLine($"Sending {count} requests");
             for (int i = 0; i < count; i++)
             {
-                if (i > 1)
+                if (i > 0)
                     timer.Start();
 
                 string url;
@@ -26,7 +27,7 @@ namespace ConsoleApp.Core
                     url = "Get/RandomNumber";
 
                 Result response = await Request.Send(new(HttpMethod.Get, url), name);
-                if (i > 1)
+                if (i > 0)
                 {
                     TimeSpan elapsed = timer.Elapsed;
                     Console.WriteLine($"Number: {i}\nDuration: {elapsed:hh\\:mm\\:ss\\.fff}\nStatus: {response.StatusCode}");
@@ -44,9 +45,28 @@ namespace ConsoleApp.Core
 
             result.AppendLine($"Average duration '{average:hh\\:mm\\:ss\\.fff}'");
             result.AppendLine($"Any resposnes shorter than '{limit:hh\\:mm\\:ss\\.fff}'? {shorter}");
-            result.AppendLine($"Shortest request '{tooShort.First(x => x.TotalMilliseconds == tooShort.Min(y => y.TotalMilliseconds)):hh\\:mm\\:ss\\.fff}'");
+            result.AppendLine($"Shortest request '{responses.Min(y => y.Value.TotalMilliseconds):hh\\:mm\\:ss\\.fff}'");
 
             Console.WriteLine($"\nResult:\n{result}");
+            List<Result> badResponses = [.. responses.Where(x => !x.Key.Success).Select(x => x.Key)];
+
+            if (badResponses.Count != 0)
+            {
+                result.Clear();
+                result.AppendLine("\n\nBad responses:");
+                foreach (Result badResponse in badResponses)
+                {
+                    if (badResponse.Response == null)
+                        continue;
+
+                    string raw = await (badResponse.Response?.ToRawString() ?? Task.FromResult(string.Empty));
+                    if (string.IsNullOrWhiteSpace(raw))
+                        continue;
+
+                    result.AppendLine($"\n\n{raw}\n\n");
+                }
+            }
+
             return responses.Last().Key;
         }
 
@@ -82,10 +102,29 @@ namespace ConsoleApp.Core
             string shorter = tooShort.Any() ? "Yes" : "No";
 
             result.AppendLine($"Average duration '{average:hh\\:mm\\:ss\\.fff}'");
-            result.AppendLine($"Any resposnes shorter than '{limit:hh\\:mm\\:ss\\.fff}'? {shorter}");
-            result.AppendLine($"Shortest request '{tooShort.First(x => x.TotalMilliseconds == tooShort.Min(y => y.TotalMilliseconds)):hh\\:mm\\:ss\\.fff}'");
+            result.AppendLine($"Any responses shorter than '{limit:hh\\:mm\\:ss\\.fff}'? {shorter}");
+            result.AppendLine($"Shortest request '{responses.Min(x => x.Value):hh\\:mm\\:ss\\.fff}'");
 
             Console.WriteLine($"\nResult:\n{result}");
+            List<Result> badResponses = [.. responses.Where(x => !x.Key.Success).Select(x => x.Key)];
+
+            if (badResponses.Count != 0)
+            {
+                result.Clear();
+                result.AppendLine("\n\nBad responses:");
+                foreach (Result badResponse in badResponses)
+                {
+                    if (badResponse.Response == null)
+                        continue;
+
+                    string raw = await (badResponse.Response?.ToRawString() ?? Task.FromResult(string.Empty));
+                    if (string.IsNullOrWhiteSpace(raw))
+                        continue;
+
+                    result.AppendLine($"\n\n{raw}\n\n");
+                }
+            }
+
             return responses.Last().Key;
         }
     }

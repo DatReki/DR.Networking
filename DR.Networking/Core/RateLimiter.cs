@@ -1,17 +1,31 @@
-﻿using DR.ConcurrentCollections;
-using DR.Networking.Models;
+﻿using DR.Networking.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DR.Networking.Core
 {
     internal class RateLimiter
     {
-        private static readonly ConcurrentObservableCollection<RequestHistoryItem> RequestHistory = [];
+        internal RateLimiter(string id, long start)
+        {
+            Id = id;
+            Start = start;
+        }
+
+        /// <summary>
+        /// Id of the request
+        /// </summary>
+        private readonly string Id;
+        
+        /// <summary>
+        /// Start time of the request
+        /// </summary>
+        private readonly long Start;
+
         private static bool GlobalRateLimiting { get { return Settings.GlobalDuration != null && Settings.GlobalDuration.Value.TotalMilliseconds > 0; } }
         private static bool UrlRateLimiting { get { return Settings.UrlRateLimits.Any(x => x.Duration.TotalMilliseconds > 0); } }
 
@@ -32,23 +46,46 @@ namespace DR.Networking.Core
         /// </summary>
         /// <param name="url">Url associated with the request.</param>
         /// <returns></returns>
-        internal static async Task Check(Uri? url)
+        internal async Task<RateLimitResult> Check(Uri? url)
         {
+            RateLimitResult result = new();
             if (url == null)
-                return;
+                return result;
             else if (!GlobalRateLimiting && !UrlRateLimiting)
-                return;
+                return result;
 
             if (!IsRateLimitUrl(url, out RateLimitType type, out UrlRateLimit? settings))
-                return;
+                return result;
 
             try
             {
-                double? waiting = CheckIfRateLimitIsNeeded(type, settings);
-                if (waiting == null)
-                    return;
-                else
-                    await Task.Delay((int)waiting);
+                using (CancellationTokenSource cts = new(result.Timeout))
+                {
+                    while (!IsNextRequest())
+                    {
+                        // If request is sitting longer in the ratelimit queue than allowed cancel it.
+                        if (cts.IsCancellationRequested)
+                        {
+                            result.TimedOut = true;
+                            break;
+                        }
+
+                        await Task.Delay(5);
+                    }
+                }
+
+                if (!result.TimedOut)
+                {
+                    TimeSpan? waiting = CheckIfRateLimitIsNeeded(type, settings);
+                    if (waiting != null)
+                    {
+                        // If request is sitting longer in the ratelimit queue than allowed cancel it.
+                        if (Stopwatch.GetTimestamp() + waiting?.Ticks > Start + result.Timeout.Ticks)
+                            result.TimedOut = true;
+                        else
+                            await Task.Delay(waiting?.Milliseconds ?? 0);
+                    }
+                }
             }
             catch
             {
@@ -56,22 +93,14 @@ namespace DR.Networking.Core
             }
             finally
             {
-                RequestHistory.Add(new RequestHistoryItem()
+                History.Update(new HistoryData(History.Get(Id))
                 {
-                    RequestTimestamp = Stopwatch.GetTimestamp(),
                     Settings = settings,
                     Type = type,
-                    Url = url,
                 });
             }
 
-            return;
-        }
-
-        internal static void ListenToChanges()
-        {
-            RequestHistory.CollectionChanged -= RequestHistoryChange;
-            RequestHistory.CollectionChanged += RequestHistoryChange;
+            return result;
         }
 
         /// <summary>
@@ -118,38 +147,55 @@ namespace DR.Networking.Core
         }
 
         /// <summary>
+        /// Check if the current request is the first in the queue.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsNextRequest()
+        {
+            HistoryData? inProgress = History.Requests.FirstOrDefault(x => x.End == null);
+            if (inProgress != null)
+            {
+                if (inProgress.Id == Id)
+                    return true;
+                else
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Check if we even need to delay the request.
         /// </summary>
         /// <param name="type"></param>
         /// <param name="settings"></param>
         /// <returns></returns>
-        private static double? CheckIfRateLimitIsNeeded(RateLimitType type, UrlRateLimit? settings)
+        private static TimeSpan? CheckIfRateLimitIsNeeded(RateLimitType type, UrlRateLimit? settings)
         {
-            double? result = null;
-            RequestHistoryItem? previousRequest = null;
+            TimeSpan? result = null;
+            HistoryData? previousRequest = null;
 
             switch (type)
             {
                 case RateLimitType.Endpoint:
                     if (settings != null)
                     {
-                        previousRequest = RequestHistory
-                            .Where(x => x.Url == settings.Uri)
-                            .LastOrDefault();
+                        previousRequest = History.Requests
+                            .LastOrDefault(x => x.Url == settings.Uri && x.End != null);
                     }
                     break;
                 case RateLimitType.Domain:
                     if (settings != null)
                     {
-                        previousRequest = RequestHistory
-                            .Where(x => x.Url.Host == settings.Uri.Host)
-                            .LastOrDefault();
+                        previousRequest = History.Requests
+                            .LastOrDefault(x => x.Url?.Host == settings.Uri.Host && x.End != null);
                     }
                     break;
                 case RateLimitType.Global:
                     if (Settings.GlobalDuration != null)
                     {
-                        previousRequest = RequestHistory.LastOrDefault();
+                        previousRequest = History.Requests
+                            .LastOrDefault(x => x.End != null);
                     }
                     break;
             }
@@ -164,69 +210,25 @@ namespace DR.Networking.Core
                 case RateLimitType.Domain:
                     if (settings != null)
                     {
-                        TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.RequestTimestamp);
+                        TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.End ?? Stopwatch.GetTimestamp());
                         if (timeBetween < settings.Duration)
-                            result = settings.Duration.Subtract(timeBetween).TotalMilliseconds.RoundUp();
+                            result = settings.Duration.Subtract(timeBetween).RoundUp();
                     }
                     break;
                 case RateLimitType.Global:
                     if (Settings.GlobalDuration != null)
                     {
-                        TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.RequestTimestamp);
+                        TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.End ?? Stopwatch.GetTimestamp());
                         if (timeBetween < Settings.GlobalDuration)
-                            result = ((TimeSpan)Settings.GlobalDuration).Subtract(timeBetween).TotalMilliseconds.RoundUp();
+                            result = ((TimeSpan)Settings.GlobalDuration).Subtract(timeBetween).RoundUp();
                     }
                     break;
             }
 
-            if (result != null && result > 0)
+            if (result != null && result?.TotalMilliseconds > 0)
                 return result;
 
             return null;
-        }
-
-        /// <summary>
-        /// Remove old items from the list if they're outside of their rate limit durations.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void RequestHistoryChange(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (e.Action != NotifyCollectionChangedAction.Add)
-                return;
-            else if (e.NewItems == null)
-                return;
-
-            // For performance reasons only remove items if there are more than 100 requests in the list.
-            if (RequestHistory.Count > 100)
-            {
-                long timestamp = Stopwatch.GetTimestamp();
-                IEnumerable<RequestHistoryItem> remove = [.. RequestHistory.Where(x =>
-                {
-                    TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(x.RequestTimestamp, timestamp);
-                    if (x.Type == RateLimitType.Endpoint || x.Type == RateLimitType.Endpoint)
-                    {
-                        if (x.Settings == null)
-                            return true;
-                        else if (timeBetween > x.Settings.Duration)
-                            return true;
-                        else
-                            return false;
-                    }
-                    else if (x.Type == RateLimitType.Global)
-                    {
-                        if (timeBetween > Settings.GlobalDuration)
-                            return true;
-                        else
-                            return false;
-                    }
-                    else
-                        return true;
-                })];
-
-                foreach (RequestHistoryItem item in remove)
-                    RequestHistory.Remove(item);
-            }
         }
     }
 }

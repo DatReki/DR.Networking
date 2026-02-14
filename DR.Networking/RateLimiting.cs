@@ -15,11 +15,14 @@ namespace DR.Networking
         public static void UpdateGlobal(TimeSpan? value)
             => Settings.GlobalDuration = value;
 
+        public static void UpdateRateLimitTimeout(TimeSpan? value)
+            => Settings.RateLimitTimeout = value;
+
         /// <summary>
         /// Get a list of all the <see cref="UrlRateLimit"/>'s that have been added to the library.
         /// </summary>
         public static List<UrlRateLimit> GetUrlRateLimits()
-            => Settings.UrlRateLimits.ToList();
+            => [.. Settings.UrlRateLimits];
 
         /// <summary>
         /// Try to add multiple url specific rate limits to the library.

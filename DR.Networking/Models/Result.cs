@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿using DR.Networking.Core;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace DR.Networking.Models
 {
@@ -36,6 +38,11 @@ namespace DR.Networking.Models
         /// The <see cref="HttpMethod"/> is either not supported or not yet implemented
         /// </summary>
         HttpMethodNotSupported,
+
+        /// <summary>
+        /// The request was in the rate limit queue for too long and got cancelled before it could be send.
+        /// </summary>
+        RateLimitTimeout,
     }
 
     /// <summary>
@@ -130,6 +137,12 @@ namespace DR.Networking.Models
                     return content;
             }
             set => content = value;
+        }
+
+        public async Task CloneRequestMessage(HttpRequestMessage request)
+        {
+            if (Settings.CloneRequestMessage)
+                Request = await request.Clone();
         }
     }
 }

@@ -187,7 +187,6 @@ namespace Tests.Requests
             Stopwatch timer = new();
             List<KeyValuePair<Result, TimeSpan>> responses = [];
 
-            Console.WriteLine($"Starting {count} calls to 'Get/RandomNumber'");
             for (int i = 0; i < count; i++)
             {
                 if (i > 1)
@@ -209,9 +208,8 @@ namespace Tests.Requests
                 }
             }
 
-            IEnumerable<TimeSpan> tooShort = responses.Where(x => x.Value < limit).Select(x => x.Value);
             TimeSpan average = TimeSpan.FromMilliseconds(responses.Average(x => x.Value.TotalMilliseconds));
-            TimeSpan shortest = tooShort.First(x => x.TotalMilliseconds == tooShort.Min(y => y.TotalMilliseconds));
+            TimeSpan shortest = responses.Min(x => x.Value);
 
             return (responses, average, shortest);
         }

@@ -5,12 +5,73 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DR.Networking.Core
 {
-    internal static class Extensions
+    public static class Extensions
     {
+        public static async Task<string> ToRawString(this HttpRequestMessage request)
+        {
+            StringBuilder result = new();
+            result.AppendLine($"{request.Method} {request.RequestUri} HTTP/{request.Version}");
+
+            foreach (var header in request.Headers)
+            {
+                foreach (var value in header.Value)
+                    result.AppendLine($"{header.Key}: {value}");
+            }
+
+            if (request.Content?.Headers != null)
+            {
+                foreach (var header in request.Content.Headers)
+                {
+                    foreach (var value in header.Value)
+                        result.AppendLine($"{header.Key}: {value}");
+                }
+            }
+
+            result.AppendLine();
+            string body = await (request.Content?.ReadAsStringAsync() ?? Task.FromResult(string.Empty));
+            if (!string.IsNullOrWhiteSpace(body))
+                result.AppendLine(body);
+
+            return result.ToString();
+        }
+
+        public static async Task<string> ToRawString(this HttpResponseMessage response)
+        {
+            StringBuilder result = new();
+            result.AppendLine($"HTTP/{response.Version} {(int)response.StatusCode} {response.ReasonPhrase}");
+
+            foreach (var header in response.Headers)
+            {
+                foreach (var value in header.Value)
+                    result.AppendLine($"{header.Key}: {value}");
+            }
+
+            if (response.Content != null)
+            {
+                HttpContent content = response.Content;
+                if (content.Headers != null)
+                {
+                    foreach (var header in content.Headers)
+                    {
+                        foreach (var value in header.Value)
+                            result.AppendLine($"{header.Key}: {value}");
+                    }
+                }
+
+                result.AppendLine();
+                string body = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(body))
+                    result.AppendLine(body);
+            }
+
+            return result.ToString();
+        }
+
         /// <summary>
         /// Round the double value up to the nearest integer.
         /// </summary>
@@ -20,12 +81,28 @@ namespace DR.Networking.Core
             => Math.Ceiling(value);
 
         /// <summary>
+        /// Round the <see cref="TimeSpan"/> up to the nearest millisecond.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static TimeSpan RoundUp(this TimeSpan value)
+            => TimeSpan.FromMilliseconds(value.TotalMilliseconds.RoundUp());
+
+        /// <summary>
         /// Round the double value down to the nearest integer.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
         internal static double RoundDown(this double value)
             => Math.Floor(value);
+
+        /// <summary>
+        /// Round the <see cref="TimeSpan"/> down to the nearest millisecond.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static TimeSpan RoundDown(this TimeSpan value)
+            => TimeSpan.FromMilliseconds(value.TotalMilliseconds.RoundDown());
 
         /// <summary>
         /// Get the name for a <see cref="Models.NamedClient"/> from <see cref="MemberInfo"/>.
@@ -114,7 +191,7 @@ namespace DR.Networking.Core
 
             try
             {
-                MemoryStream ms = new MemoryStream();
+                MemoryStream ms = new();
                 clone = new HttpRequestMessage(request.Method, request.RequestUri);
 
                 if (request.Content != null)

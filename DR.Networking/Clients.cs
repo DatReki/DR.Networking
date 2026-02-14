@@ -15,7 +15,7 @@ namespace DR.Networking
         /// <param name="client"></param>
         /// <returns></returns>
         public static NamedClient CreateClient(string name, HttpClient client)
-            => new NamedClient(name, client);
+            => new(name, client);
 
         /// <summary>
         /// Create a <see cref="NamedClient"/> by type.
@@ -24,7 +24,7 @@ namespace DR.Networking
         /// <param name="client"></param>
         /// <returns></returns>
         public static NamedClient CreateClient<T>(HttpClient client)
-            => new NamedClient(typeof(T).GetClientName(), client);
+            => new(typeof(T).GetClientName(), client);
 
         /// <summary>
         /// Get a <see cref="NamedClient"/> you have added to the library.
@@ -47,7 +47,7 @@ namespace DR.Networking
         /// </summary>
         /// <returns></returns>
         public static List<string> GetClientNames()
-            => Settings.NamedClients.Select(x => x.Name).ToList();
+            => [.. Settings.NamedClients.Select(x => x.Name)];
 
         /// <summary>
         /// Try and get a <see cref="NamedClient"/> you have added to the library.

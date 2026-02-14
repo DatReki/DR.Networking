@@ -22,6 +22,11 @@ namespace DR.Networking.Core
         internal static TimeSpan? GlobalDuration { get; set; } = null;
 
         /// <summary>
+        /// The duration of how long a request can be stuck in the ratelimit queue before it gets cancelled.
+        /// </summary>
+        internal static TimeSpan? RateLimitTimeout { get; set; } = null;
+
+        /// <summary>
         /// Enable or disable the libraries url validation.
         /// </summary>
         internal static bool ValidateUrl { get; set; } = true;
@@ -35,12 +40,12 @@ namespace DR.Networking.Core
         /// If this variable is set it will act as the site specific duration between requests on the same domain or url <br />
         /// that the library will check for on every request.
         /// </summary>
-        internal static ObservableCollection<UrlRateLimit> UrlRateLimits { get; set; } = new ObservableCollection<UrlRateLimit>();
+        internal static ObservableCollection<UrlRateLimit> UrlRateLimits { get; set; } = [];
 
         /// <summary>
         /// The HttpClient used to make the requests.
         /// </summary>
-        internal static HttpClient Client = new HttpClient(new StandardSocketsHttpHandler()
+        internal static HttpClient Client = new(new StandardSocketsHttpHandler()
         {
             PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
             PooledConnectionLifetime = TimeSpan.FromMinutes(1),
@@ -49,7 +54,7 @@ namespace DR.Networking.Core
         /// <summary>
         /// Allow users to pass custom HttpClients used for specific requests.
         /// </summary>
-        internal static List<NamedClient> NamedClients = new List<NamedClient>();
+        internal static List<NamedClient> NamedClients = [];
 
         internal static void ListenToChanges()
         {

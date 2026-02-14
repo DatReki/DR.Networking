@@ -7,11 +7,11 @@ namespace DR.Networking.Core
         /// <summary>
         /// Match all the double slashes in a url.
         /// </summary>
-        internal static readonly Regex DoubleSlashes = new Regex(@"(?<!(http:|https:))//", RegexOptions.Compiled);
+        internal static readonly Regex DoubleSlashes = new(@"(?<!(http:|https:))//", RegexOptions.Compiled);
 
         /// <summary>
         /// Get a ip address from a string.
         /// </summary>
-        internal static readonly Regex Ip = new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", RegexOptions.Compiled);
+        internal static readonly Regex Ip = new(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", RegexOptions.Compiled);
     }
 }

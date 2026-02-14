@@ -15,13 +15,16 @@ namespace DR.Networking
         public Configuration(ConfigurationOptions options)
         {
             Settings.ListenToChanges();
-            RateLimiter.ListenToChanges();
+            History.ListenToChanges();
 
             if (options.GlobaRateLimit != null)
                 RateLimiting.UpdateGlobal((TimeSpan)options.GlobaRateLimit);
 
             if (options.UrlRateLimits != null)
                 RateLimiting.Add(options.UrlRateLimits);
+
+            if (options.RateLimitTimeout != null)
+                RateLimiting.UpdateRateLimitTimeout((TimeSpan)options.RateLimitTimeout);
 
             if (options.BaseClient != null)
                 Settings.Client = options.BaseClient;

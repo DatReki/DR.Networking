@@ -1,7 +1,9 @@
 ﻿using DR.Networking.Core.Attributes;
 using DR.Networking.Models;
+using Easy.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -44,6 +46,12 @@ namespace DR.Networking.Core
         internal static readonly List<RequestTypes> SupportedTypes = GetSupportedTypes();
 
         /// <summary>
+        /// Gets the singleton instance of the IDGenerator used for generating unique identifiers.
+        /// </summary>
+        /// <remarks>This static field ensures that all parts of the application use the same instance of <see cref="IDGenerator"/>.</remarks>
+        private static readonly IDGenerator _generator = IDGenerator.Instance;
+
+        /// <summary>
         /// The base function for making a network request to a specific url.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -52,7 +60,9 @@ namespace DR.Networking.Core
         /// <returns></returns>
         internal static async Task<Result> RequestBase<T>(HttpRequestMessage request, string? namedClient = null)
         {
+            Result result;
             HttpClient client;
+
             if (string.IsNullOrWhiteSpace(namedClient))
                 client = Settings.Client;
             else
@@ -63,24 +73,30 @@ namespace DR.Networking.Core
 
             if (string.IsNullOrWhiteSpace(url))
             {
-                return new Result()
+                result = new Result()
                 {
                     Success = false,
                     Url = string.Empty,
                     Error = "No url provided",
                     ErrorType = ErrorType.InvalidUrl,
                 };
+
+                await result.CloneRequestMessage(request);
+                return result;
             }
 
             if (!request.Method.IsSupported())
             {
-                return new Result()
+                result = new Result()
                 {
                     Success = false,
                     Url = url,
                     Error = $"The selected HttpMethod '{request.Method}' is either not supported or not yet implemented",
                     ErrorType = ErrorType.HttpMethodNotSupported,
                 };
+
+                await result.CloneRequestMessage(request);
+                return result;
             }
 
             if (Settings.ValidateUrl)
@@ -93,22 +109,63 @@ namespace DR.Networking.Core
                 }
                 else
                 {
-                    return new Result()
+                    result = new Result()
                     {
                         Url = GetResultUrl(urlChecked.Url, url),
                         Error = urlChecked.Error,
                         ErrorType = urlChecked.ErrorType,
                     };
+
+                    await result.CloneRequestMessage(request);
+                    return result;
                 }
             }
             else
                 request.RequestUri = uri;
 
-            await RateLimiter.Check(request.RequestUri);
-            if (Settings.CloneRequestMessage)
-                return CreateResult(await request.Clone(request.RequestUri), await client.SendAsync(request));
-            else
-                return CreateResult(null, await client.SendAsync(request));
+            string id = _generator.Next;
+            long start = Stopwatch.GetTimestamp();
+
+            History.Add(new()
+            {
+                Id = id,
+                Start = start,
+                Url = request.RequestUri,
+            });
+
+            RateLimitResult ratelimit = await new RateLimiter(id, start).Check(request.RequestUri);
+            if (ratelimit.TimedOut)
+            {
+                History.Update(new HistoryData(History.Get(id))
+                {
+                    End = Stopwatch.GetTimestamp(),
+                });
+
+                result = new Result()
+                {
+                    Success = false,
+                    Url = request.RequestUri?.ToString() ?? string.Empty,
+                    Error = $"Request was in the rate limit queue for more than {ratelimit.Timeout}",
+                    ErrorType = ErrorType.RateLimitTimeout,
+                };
+
+                await result.CloneRequestMessage(request);
+                return result;
+            }
+
+            HttpResponseMessage response = await client.SendAsync(request);
+            History.Update(new HistoryData(History.Get(id))
+            {
+                End = Stopwatch.GetTimestamp(),
+            });
+
+            result = new()
+            {
+                Response = response,
+            };
+
+            await result.CloneRequestMessage(request);
+            return result;
         }
 
         /// <summary>
@@ -137,17 +194,6 @@ namespace DR.Networking.Core
             return requestUri;
         }
 
-        private static Result CreateResult(HttpRequestMessage? request, HttpResponseMessage response)
-        {
-            Result result = new Result()
-            {
-                Request = request,
-                Response = response,
-            };
-
-            return result;
-        }
-
         private static string GetResultUrl(Uri checkedUri, string url)
         {
             string checkedUrl = checkedUri.ToString();
@@ -163,7 +209,7 @@ namespace DR.Networking.Core
 
         private static List<RequestTypes> GetSupportedTypes()
         {
-            List<RequestTypes> result = new List<RequestTypes>();
+            List<RequestTypes> result = [];
             Type rType = typeof(RequestTypes);
             Type sType = typeof(Supported);
 

@@ -23,6 +23,11 @@ namespace DR.Networking.Models
         public List<UrlRateLimit>? UrlRateLimits { get; set; } = null;
 
         /// <summary>
+        /// The duration of how long a request can be stuck in the ratelimit queue before it gets cancelled.
+        /// </summary>
+        public TimeSpan? RateLimitTimeout { get; set; } = null;
+
+        /// <summary>
         /// Pass your own <see cref="HttpClient"/> for the library to use when no <see cref="NamedClient"/> is provided/found.<br />
         /// Will use the default <see cref="HttpClient"/> if none are provided.
         /// </summary>

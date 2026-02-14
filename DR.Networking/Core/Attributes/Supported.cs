@@ -2,11 +2,8 @@
 
 namespace DR.Networking.Core.Attributes
 {
-    internal class Supported : Attribute
+    internal class Supported(bool isSupported) : Attribute
     {
-        public bool IsSupported;
-
-        public Supported(bool isSupported)
-            => IsSupported = isSupported;
+        public bool IsSupported = isSupported;
     }
 }

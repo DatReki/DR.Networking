@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="DR.ConcurrentCollections" Version="1.0.0" />
+    <PackageReference Include="Easy.Common" Version="4.5.0" />
     <PackageReference Include="Nager.PublicSuffix" Version="3.7.0" />
     <PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.9" />
     <PackageReference Include="System.Collections.Immutable" Version="10.0.1" />

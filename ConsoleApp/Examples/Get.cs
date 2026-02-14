@@ -2,9 +2,6 @@
 using DR.Networking;
 using DR.Networking.Models;
 using Intermediate;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
 
 namespace ConsoleApp.Examples
 {

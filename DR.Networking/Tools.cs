@@ -20,7 +20,7 @@ namespace DR.Networking
         internal static bool TryGetStartsWith(Uri url, ObservableCollection<UrlRateLimit> ratelimits, out List<UrlRateLimit> found)
         {
             bool result = false;
-            found = new List<UrlRateLimit>();
+            found = [];
 
             IEnumerable<UrlRateLimit> compare = ratelimits.Where(x => x.Uri.Host == url.Host);
             int count = compare.Count();
@@ -35,9 +35,9 @@ namespace DR.Networking
                     found.Add(check);
             }
 
-            if (found.Any())
+            if (found.Count > 0)
             {
-                found = found.OrderByDescending(x => x.UrlString.Length).ToList();
+                found = [.. found.OrderByDescending(x => x.UrlString.Length)];
                 result = true;
             }
 
@@ -59,7 +59,7 @@ namespace DR.Networking
             /// <param name="endingTimestamp">The timestamp marking the end of the time period.</param>
             /// <returns>A <see cref="TimeSpan"/> for the elapsed time between the starting and ending timestamps.</returns>
             public static TimeSpan GetElapsedTime(long startingTimestamp, long endingTimestamp) =>
-                new TimeSpan((long)((endingTimestamp - startingTimestamp) * TickFrequency));
+                new((long)((endingTimestamp - startingTimestamp) * TickFrequency));
         }
     }
 }
