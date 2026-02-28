@@ -28,6 +28,23 @@ namespace Backend
             }
         }
 
+        public static bool TryParseJson<T>(string json, out T? output)
+        {
+            try
+            {
+                output = JsonConvert.DeserializeObject<T>(json, JsonSettings);
+                if (output == null)
+                    return false;
+
+                return true;
+            }
+            catch
+            {
+                output = default;
+                return false;
+            }
+        }
+
         public static bool TryGetFormattedJson(string input, out string output)
         {
             bool result = TryParseJson(input, out JObject? json);

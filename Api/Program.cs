@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Threading.RateLimiting;
 
 namespace Api
 {
@@ -20,6 +22,19 @@ namespace Api
                 options.KnownProxies.Clear();
             });
 
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.AddFixedWindowLimiter("ratelimit", opt =>
+                {
+                    opt.AutoReplenishment = true;
+                    opt.PermitLimit = 1;
+                    opt.QueueLimit = 0;
+                    opt.Window = TimeSpan.FromMilliseconds(115);
+                    opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                });
+            });
+
             WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -34,7 +49,7 @@ namespace Api
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseRateLimiter();
             app.UseAuthorization();
 
             app.MapControllerRoute(

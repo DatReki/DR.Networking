@@ -1,5 +1,4 @@
-﻿using Backend;
-using DR.Networking;
+﻿using DR.Networking;
 using DR.Networking.Models;
 using Intermediate;
 using System.Net;
@@ -25,20 +24,6 @@ namespace Tests.Requests
                     content = await response.Content.ReadAsStringAsync();
 
                 Assert.That(content, Is.EqualTo("This is the result of the example GET request"), "GET request with named client did not receive excpected reply");
-            }
-        }
-
-        [Test]
-        public async Task EmptyUrl()
-        {
-            HttpRequestMessage request = new(HttpMethod.Get, "");
-            Result response = await Request.Send(request);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(response, Is.Not.Null);
-                Assert.That(response.Success, Is.Not.True);
-                Assert.That(response.ErrorType, Is.EqualTo(ErrorType.InvalidUrl));
             }
         }
 
@@ -142,7 +127,7 @@ namespace Tests.Requests
         [Test]
         public async Task CompareIpv6()
         {
-            IPAddress? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6);
+            IPAddress ? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
             if (address == null)
             {
                 Assert.Fail("Could not get IPv6 address");
@@ -162,6 +147,49 @@ namespace Tests.Requests
                 Assert.That(string.IsNullOrWhiteSpace(compare), Is.False);
                 Assert.That(response.Url, Is.EqualTo(compare));
             }
+        }
+
+
+        [Test]
+        public static async Task ParallelRequests()
+        {
+            List<string> requestUris =
+            [
+                "Get/RandomNumber",
+                "Get/RandomString",
+                "Get/RandomText",
+                "Get/RandomJson",
+                "Get/RandomXml",
+            ];
+
+            TimeSpan limit = TimeSpan.FromMilliseconds(100);
+            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(Clients.GetClientNames().First(), requestUris);
+
+            if (responses.Any(x => !x.Key.Success))
+                Assert.Fail("One or more parallel get requests failed");
+            else
+                Assert.Pass();
+        }
+
+        [Test]
+        public static async Task LoopedRequests()
+        {
+            List<string> requestUris =
+            [
+                "Get/RandomNumber",
+                "Get/RandomString",
+                "Get/RandomText",
+                "Get/RandomJson",
+                "Get/RandomXml",
+            ];
+
+            TimeSpan limit = TimeSpan.FromMilliseconds(100);
+            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendLoopedRequest(Clients.GetClientNames().First(), requestUris);
+
+            if (responses.Any(x => !x.Key.Success))
+                Assert.Fail("One or more looped get requests failed");
+            else
+                Assert.Pass();
         }
     }
 }

@@ -3,6 +3,7 @@ using Nager.PublicSuffix;
 using Nager.PublicSuffix.RuleProviders;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -27,21 +28,25 @@ namespace DR.Networking.Core
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        internal static async Task<CheckUrlModel> CheckUrl(string url)
+        internal static async Task<UrlCheck> CheckUrl(string url)
         {
+            UrlHistory? history = History.Urls.FirstOrDefault(x => x.Original == url);
+            if (history != null && history.Checked != null && history.Checked?.Success == true)
+                return history.Checked;
+
             if (TryCreateUri(url, UriKind.Absolute, out Uri? newUrl) && newUrl != null)
             {
                 switch (newUrl.HostNameType)
                 {
                     case UriHostNameType.IPv4:
                     case UriHostNameType.IPv6:
-                        return new CheckUrlModel(true, newUrl, null, ErrorType.None);
+                        return new UrlCheck(true, newUrl, null, ErrorType.None);
                     case UriHostNameType.Basic:
                     case UriHostNameType.Dns:
                         {
                             // Ignore domain check for localhost requests.
                             if (newUrl.Host == "localhost")
-                                return new CheckUrlModel(true, newUrl, null, ErrorType.None);
+                                return new UrlCheck(true, newUrl, null, ErrorType.None);
 
                             DomainParser domainParser = await GetDomainParser();
                             if (domainParser.IsValidDomain(newUrl.Host))
@@ -50,39 +55,39 @@ namespace DR.Networking.Core
 
                                 // Technically a redundant check.
                                 if (domainInfo == null)
-                                    return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
+                                    return new UrlCheck(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
 
                                 try
                                 {
                                     if (string.IsNullOrWhiteSpace(domainInfo.RegistrableDomain))
-                                        return new CheckUrlModel(false, null, "The provided hostname is empty.", ErrorType.InvalidHostname);
+                                        return new UrlCheck(false, null, "The provided hostname is empty.", ErrorType.InvalidHostname);
 
                                     Dns.GetHostEntry(domainInfo.RegistrableDomain);
-                                    return new CheckUrlModel(true, newUrl, null, ErrorType.None);
+                                    return new UrlCheck(true, newUrl, null, ErrorType.None);
                                 }
                                 catch (Exception ex)
                                 {
                                     ErrorType errorType = ErrorType.InvalidHostname;
 
                                     if (ex is ArgumentOutOfRangeException)
-                                        return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is longer than 255 characters.", errorType);
+                                        return new UrlCheck(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is longer than 255 characters.", errorType);
                                     else if (ex is SocketException)
-                                        return new CheckUrlModel(false, null, $"Encountered an error when trying to resolve the hostname ({domainInfo.RegistrableDomain}).", errorType);
+                                        return new UrlCheck(false, null, $"Encountered an error when trying to resolve the hostname ({domainInfo.RegistrableDomain}).", errorType);
                                     else if (ex is ArgumentException)
-                                        return new CheckUrlModel(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is invalid.", errorType);
+                                        return new UrlCheck(false, null, $"The provided hostname ({domainInfo.RegistrableDomain}) is invalid.", errorType);
                                     else
-                                        return new CheckUrlModel(false, null, $"Something went wrong  while trying to parse the hostname ({domainInfo.RegistrableDomain}).", errorType);
+                                        return new UrlCheck(false, null, $"Something went wrong  while trying to parse the hostname ({domainInfo.RegistrableDomain}).", errorType);
                                 }
                             }
                             else
-                                return new CheckUrlModel(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
+                                return new UrlCheck(false, null, "The URL you provided is not a fully qualified domain name (FQDN).", ErrorType.InvalidDomain);
                         }
                     default:
-                        return new CheckUrlModel(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
+                        return new UrlCheck(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
                 }
             }
             else
-                return new CheckUrlModel(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
+                return new UrlCheck(false, null, "Was unable to parse either a valid URL or a IPv4/IPv6 address.", ErrorType.InvalidUrl);
         }
 
         /// <summary>

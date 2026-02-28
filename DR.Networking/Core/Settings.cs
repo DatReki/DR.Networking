@@ -43,7 +43,7 @@ namespace DR.Networking.Core
         internal static ObservableCollection<UrlRateLimit> UrlRateLimits { get; set; } = [];
 
         /// <summary>
-        /// The HttpClient used to make the requests.
+        /// The default HttpClient used to make the requests (only used when no <see cref="NamedClient"/> is provided or can be found).
         /// </summary>
         internal static HttpClient Client = new(new StandardSocketsHttpHandler()
         {

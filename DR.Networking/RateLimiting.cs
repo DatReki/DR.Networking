@@ -15,6 +15,9 @@ namespace DR.Networking
         public static void UpdateGlobal(TimeSpan? value)
             => Settings.GlobalDuration = value;
 
+        /// <summary>
+        /// Update the duration of how long a request can be stuck in the ratelimit queue before it gets cancelled.
+        /// </summary>
         public static void UpdateRateLimitTimeout(TimeSpan? value)
             => Settings.RateLimitTimeout = value;
 

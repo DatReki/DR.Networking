@@ -1,8 +1,6 @@
 ﻿using DR.Networking;
 using DR.Networking.Models;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Security.Cryptography;
+using System.Net;
 
 namespace Tests.Failures
 {
@@ -72,7 +70,7 @@ namespace Tests.Failures
             ];
 
             DR.Networking.RateLimiting.UpdateRateLimitTimeout(TimeSpan.FromMilliseconds(50));
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await SendParallelRateLimitRequest(client.Name, TimeSpan.FromMilliseconds(100), requestUris);
+            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
             DR.Networking.RateLimiting.UpdateRateLimitTimeout(null);
 
             if (responses.Any(x => x.Key.ErrorType == ErrorType.RateLimitTimeout))
@@ -81,37 +79,61 @@ namespace Tests.Failures
                 Assert.Fail("Not all responses are rate limit timeouts");
         }
 
-        private static async Task<(List<KeyValuePair<Result, TimeSpan>> Responses, TimeSpan Average, TimeSpan Shortest)> SendParallelRateLimitRequest(string name, TimeSpan limit, List<string>? requestUris = null, int count = 15)
+        [Test]
+        public static async Task RateLimitController()
         {
-            ConcurrentBag<KeyValuePair<Result, TimeSpan>> responses = [];
-            ParallelOptions options = new()
+            NamedClient? client = EndpointClient;
+            if (client == null || client.Client == null)
             {
-                MaxDegreeOfParallelism = 2,
-            };
+                Assert.That(client, Is.Not.Null, "Client is null");
+                return;
+            }
 
-            await Parallel.ForEachAsync(Enumerable.Repeat(string.Empty, count), options, async (item, token) =>
+            string baseAddress = client.Client.BaseAddress?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(baseAddress))
             {
-                Result response;
-                Stopwatch timer = Stopwatch.StartNew();
+                Assert.That(baseAddress, Is.Not.Null, "Client is null");
+                return;
+            }
 
-                if (requestUris != null)
+            TimeSpan limit = TimeSpan.FromMilliseconds(100);
+            List<UrlRateLimit> urlRateLimits =
+            [
+                new UrlRateLimit()
                 {
-                    int index = RandomNumberGenerator.GetInt32(0, requestUris.Count);
-                    response = await Request.Send(new(HttpMethod.Get, requestUris[index]), name);
-                }
-                else
-                    response = await Request.Send(new(HttpMethod.Get, "Get/RandomNumber"), name);
+                    Duration = limit,
+                    Uri = new Uri($"{baseAddress}/Ratelimit/Basic"),
+                    WholeDomain = false,
+                },
+            ];
 
-                TimeSpan elapsed = timer.Elapsed;
-                responses.Add(new KeyValuePair<Result, TimeSpan>(response, elapsed));
-                timer.Reset();
-            });
+            string error = Core.RateLimitChecks.RemoveExistingRateLimits(urlRateLimits);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Assert.Fail(error);
+                return;
 
-            IEnumerable<TimeSpan> tooShort = responses.Where(x => x.Value < limit).Select(x => x.Value);
-            TimeSpan average = TimeSpan.FromMilliseconds(responses.Average(x => x.Value.TotalMilliseconds));
-            TimeSpan shortest = tooShort.First(x => x.TotalMilliseconds == tooShort.Min(y => y.TotalMilliseconds));
+            }
 
-            return (responses.ToList(), average, shortest);
+            bool added = DR.Networking.RateLimiting.Add(urlRateLimits);
+            if (!added)
+            {
+                Assert.Fail("Unable to add ratelimit");
+                return;
+            }
+
+            List<string> requestUris =
+            [
+                "Ratelimit/Basic",
+            ];
+
+            List<HttpStatusCode> statusCodes = [];
+            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
+
+            foreach (KeyValuePair<Result, TimeSpan> response in responses)
+                statusCodes.Add((HttpStatusCode)response.Key.StatusCode);
+
+            Assert.That(statusCodes.Any(x => x == HttpStatusCode.TooManyRequests), Is.True, $"Status codes did not contain any '{HttpStatusCode.TooManyRequests}'");
         }
 
         [OneTimeTearDown]

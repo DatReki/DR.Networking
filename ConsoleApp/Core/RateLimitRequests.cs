@@ -45,7 +45,7 @@ namespace ConsoleApp.Core
 
             result.AppendLine($"Average duration '{average:hh\\:mm\\:ss\\.fff}'");
             result.AppendLine($"Any resposnes shorter than '{limit:hh\\:mm\\:ss\\.fff}'? {shorter}");
-            result.AppendLine($"Shortest request '{responses.Min(y => y.Value.TotalMilliseconds):hh\\:mm\\:ss\\.fff}'");
+            result.AppendLine($"Shortest request '{responses.First(x => x.Value == responses.Min(y => y.Value)).Value:hh\\:mm\\:ss\\.fff}'");
 
             Console.WriteLine($"\nResult:\n{result}");
             List<Result> badResponses = [.. responses.Where(x => !x.Key.Success).Select(x => x.Key)];
@@ -103,7 +103,7 @@ namespace ConsoleApp.Core
 
             result.AppendLine($"Average duration '{average:hh\\:mm\\:ss\\.fff}'");
             result.AppendLine($"Any responses shorter than '{limit:hh\\:mm\\:ss\\.fff}'? {shorter}");
-            result.AppendLine($"Shortest request '{responses.Min(x => x.Value):hh\\:mm\\:ss\\.fff}'");
+            result.AppendLine($"Shortest request '{responses.First(x => x.Value == responses.Min(y => y.Value)).Value:hh\\:mm\\:ss\\.fff}'");
 
             Console.WriteLine($"\nResult:\n{result}");
             List<Result> badResponses = [.. responses.Where(x => !x.Key.Success).Select(x => x.Key)];

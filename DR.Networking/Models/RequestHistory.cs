@@ -4,13 +4,11 @@ using static DR.Networking.Core.RateLimiter;
 
 namespace DR.Networking.Models
 {
-    internal class HistoryData
+    internal class RequestHistory
     {
+        internal RequestHistory() { }
 
-
-        internal HistoryData() { }
-
-        internal HistoryData(HistoryData source) 
+        internal RequestHistory(RequestHistory source) 
         {
             Id = source.Id;
             Url = source.Url;
@@ -29,6 +27,11 @@ namespace DR.Networking.Models
         /// Url of the request.
         /// </summary>
         internal Uri? Url { get; set; } = null;
+
+        /// <summary>
+        /// If the request was finished or not.
+        /// </summary>
+        internal bool Finished { get; set; } = false;
 
         /// <summary>
         /// The <see cref="RateLimitType"/> which corresponds to this request.

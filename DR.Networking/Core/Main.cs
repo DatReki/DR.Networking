@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DR.Networking.Core
@@ -34,6 +35,8 @@ namespace DR.Networking.Core
         Connect,
         [Supported(true)]
         Patch,
+        [Supported(true)]
+        Query,
         [Supported(false)]
         Unknown
     }
@@ -85,13 +88,13 @@ namespace DR.Networking.Core
                 return result;
             }
 
-            if (!request.Method.IsSupported())
+            if (!request.Method.IsSupported(out string message))
             {
                 result = new Result()
                 {
                     Success = false,
                     Url = url,
-                    Error = $"The selected HttpMethod '{request.Method}' is either not supported or not yet implemented",
+                    Error = string.IsNullOrWhiteSpace(message) ? $"The selected HttpMethod '{request.Method}' is either not supported or not yet implemented" : message,
                     ErrorType = ErrorType.HttpMethodNotSupported,
                 };
 
@@ -101,9 +104,21 @@ namespace DR.Networking.Core
 
             if (Settings.ValidateUrl)
             {
-                CheckUrlModel urlChecked = await Base.CheckUrl(url);
+                UrlCheck urlChecked = await Base.CheckUrl(url);
                 if (urlChecked.Success)
                 {
+                    if (!urlChecked.FromHistory)
+                    {
+                        History.Urls.Add(new()
+                        {
+                            Original = url,
+                            Checked = new UrlCheck(urlChecked)
+                            {
+                                FromHistory = true
+                            },
+                        });
+                    }
+
                     // Since we fixed any problems with the url in the 'CheckUrl' function we will now use this full url.
                     request.RequestUri = urlChecked.Url;
                 }
@@ -126,7 +141,7 @@ namespace DR.Networking.Core
             string id = _generator.Next;
             long start = Stopwatch.GetTimestamp();
 
-            History.Add(new()
+            History.AddRequest(new()
             {
                 Id = id,
                 Start = start,
@@ -136,7 +151,7 @@ namespace DR.Networking.Core
             RateLimitResult ratelimit = await new RateLimiter(id, start).Check(request.RequestUri);
             if (ratelimit.TimedOut)
             {
-                History.Update(new HistoryData(History.Get(id))
+                History.UpdateRequest(id, new RequestHistory(History.GetRequest(id))
                 {
                     End = Stopwatch.GetTimestamp(),
                 });
@@ -154,8 +169,9 @@ namespace DR.Networking.Core
             }
 
             HttpResponseMessage response = await client.SendAsync(request);
-            History.Update(new HistoryData(History.Get(id))
+            History.UpdateRequest(id, new RequestHistory(History.GetRequest(id))
             {
+                Finished = true,
                 End = Stopwatch.GetTimestamp(),
             });
 

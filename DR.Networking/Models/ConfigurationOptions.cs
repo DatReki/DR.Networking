@@ -11,6 +11,18 @@ namespace DR.Networking.Models
 
         }
 
+        public ConfigurationOptions(ConfigurationOptions options)
+        {
+            GlobaRateLimit = options.GlobaRateLimit;
+            UrlRateLimits = options.UrlRateLimits;
+            RateLimitTimeout = options.RateLimitTimeout;
+            BaseClient = options.BaseClient;
+            NamedClients = options.NamedClients;
+            UseHttpsByDefault = options.UseHttpsByDefault;
+            ValidateUrl = options.ValidateUrl;
+            CloneRequestMessage = options.CloneRequestMessage;
+        }
+
         /// <summary>
         /// A global ratelimit applied to all request. <br /> 
         /// This value will be ignored if the url already exists in a <see cref="UrlRateLimit"/>.

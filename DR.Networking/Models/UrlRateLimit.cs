@@ -5,6 +5,10 @@ namespace DR.Networking.Models
 {
     public class UrlRateLimit
     {
+#pragma warning disable IDE1006 // Naming Styles
+        private string urlString { get; set; } = string.Empty;
+#pragma warning restore IDE1006 // Naming Styles
+
         /// <summary>
         /// Url to which you want the rate limit settings to be applied to.
         /// </summary>
@@ -29,6 +33,17 @@ namespace DR.Networking.Models
         /// <summary>
         /// The string version of the value set by <see cref="Uri"/>.
         /// </summary>
-        internal string UrlString { get; set; } = string.Empty;
+        internal string UrlString
+        {
+            get
+            {
+                string target = Uri.ToString();
+                if (!string.IsNullOrEmpty(target))
+                    return target;
+                else
+                    return urlString;
+            }
+            set => urlString = value;
+        }
     }
 }

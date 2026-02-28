@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,6 +13,11 @@ namespace DR.Networking.Core
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Convert a <see cref="HttpRequestMessage"/> into a string that represents the raw HTTP request as it would be sent over the network.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public static async Task<string> ToRawString(this HttpRequestMessage request)
         {
             StringBuilder result = new();
@@ -40,6 +46,11 @@ namespace DR.Networking.Core
             return result.ToString();
         }
 
+        /// <summary>
+        /// Convert a <see cref="HttpResponseMessage"/> into a string that represents the raw HTTP response as it would be sent over the network.
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
         public static async Task<string> ToRawString(this HttpResponseMessage response)
         {
             StringBuilder result = new();
@@ -122,38 +133,84 @@ namespace DR.Networking.Core
         /// Convert a <see cref="HttpMethod"/> to a <see cref="RequestTypes"/>
         /// </summary>
         /// <param name="method"></param>
+        /// <param name="message"></param>
         /// <returns>
         /// Returns the correlating <see cref="RequestTypes"/> type.<br />
         /// Will return <see cref="RequestTypes.Unknown"/> if none can be found.
         /// </returns>
-        internal static RequestTypes GetRequestType(this HttpMethod method)
+        internal static RequestTypes GetRequestType(this HttpMethod method, out string message)
         {
+            message = string.Empty;
             RequestTypes result;
 
             if (method == HttpMethod.Get)
+            {
                 result = RequestTypes.Get;
+            }
             else if (method == HttpMethod.Post)
+            {
                 result = RequestTypes.Post;
+            }
             else if (method == HttpMethod.Put)
+            {
                 result = RequestTypes.Put;
-#if (NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER)
+            }
+#if (NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER || NET8_0_OR_GREATER)
             else if (method == HttpMethod.Patch)
+            {
                 result = RequestTypes.Patch;
+            }
+#else
+            else if (method.Method.Equals("PATCH", StringComparison.OrdinalIgnoreCase))
+            {
+                result = RequestTypes.Unknown;
+                message = $"PATCH method is not supported in {RuntimeInformation.FrameworkDescription}. Please use .NET Standard 2.1 or .NET Core 2.1 and above to use this method.";
+            }
 #endif
             else if (method == HttpMethod.Delete)
+            {
                 result = RequestTypes.Delete;
+            }
             else if (method == HttpMethod.Head)
+            {
                 result = RequestTypes.Head;
+            }
             else if (method == HttpMethod.Options)
+            {
                 result = RequestTypes.Options;
+            }
             else if (method == HttpMethod.Trace)
+            {
                 result = RequestTypes.Trace;
-#if NET8_0_OR_GREATER
+            }
+#if (NET7_0_OR_GREATER || NET8_0_OR_GREATER)
             else if (method == HttpMethod.Connect)
+            {
                 result = RequestTypes.Connect;
+            }
+#else
+            else if (method.Method.Equals("CONNECT", StringComparison.OrdinalIgnoreCase))
+            {
+                result = RequestTypes.Unknown;
+                message = $"CONNECT method is not supported in {RuntimeInformation.FrameworkDescription}. Please use .NET 7.0 and above to use this method.";
+            }
+#endif
+#if NET10_0_OR_GREATER
+            else if (method == HttpMethod.Query)
+            {
+                result = RequestTypes.Query;
+            }
+#else
+            else if (method.Method.Equals("QUERY", StringComparison.OrdinalIgnoreCase))
+            {
+                result = RequestTypes.Unknown;
+                message = $"QUERY method is not supported in {RuntimeInformation.FrameworkDescription}. Please use .NET 10.0 and above to use this method.";
+            }
 #endif
             else
+            {
                 result = RequestTypes.Unknown;
+            }
 
             return result;
         }
@@ -163,10 +220,11 @@ namespace DR.Networking.Core
         /// </summary>
         /// <param name="method"></param>
         /// <param name="requestType"></param>
+        /// <param name="message"></param>
         /// <returns></returns>
-        internal static bool IsSupported(this HttpMethod method, out RequestTypes requestType)
+        internal static bool IsSupported(this HttpMethod method, out RequestTypes requestType, out string message)
         {
-            RequestTypes type = method.GetRequestType();
+            RequestTypes type = method.GetRequestType(out message);
             requestType = type;
 
             return Main.SupportedTypes.Any(x => x == type);
@@ -176,14 +234,16 @@ namespace DR.Networking.Core
         /// Check if the provided <see cref="HttpMethod"/> is supported by the library
         /// </summary>
         /// <param name="method"></param>
+        /// <param name="message"></param>
         /// <returns></returns>
-        internal static bool IsSupported(this HttpMethod method)
-            => IsSupported(method, out _);
+        internal static bool IsSupported(this HttpMethod method, out string message)
+            => IsSupported(method, out _, out message);
 
         /// <summary>
         /// Clone the <see cref="HttpRequestMessage"/> so that it can be used after the request has happend.
         /// </summary>
         /// <param name="request"></param>
+        /// <param name="url"></param>
         /// <returns></returns>
         internal static async Task<HttpRequestMessage?> Clone(this HttpRequestMessage request, Uri? url = null)
         {

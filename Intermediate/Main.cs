@@ -7,7 +7,7 @@ namespace Intermediate
     public class Main
     {
         /// <summary>
-        /// Create a named client which will have the <see cref="HttpClient.BaseAddress"/> set to the URL of the <see cref="Api"/> project.
+        /// Creaste a named client which will have the <see cref="HttpClient.BaseAddress"/> set to the URL of the <see cref="Api"/> project.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="options"></param>
@@ -19,7 +19,6 @@ namespace Intermediate
 
             return namedClient;
         }
-
 
         /// <summary>
         /// Create a named client which will have the <see cref="HttpClient.BaseAddress"/> set to the URL of the <see cref="Api"/> project.

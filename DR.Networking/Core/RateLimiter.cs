@@ -20,7 +20,7 @@ namespace DR.Networking.Core
         /// Id of the request
         /// </summary>
         private readonly string Id;
-        
+
         /// <summary>
         /// Start time of the request
         /// </summary>
@@ -59,31 +59,41 @@ namespace DR.Networking.Core
 
             try
             {
-                using (CancellationTokenSource cts = new(result.Timeout))
+                using CancellationTokenSource cts = new(result.Timeout);
+                while (!IsNextRequest(type, settings))
                 {
-                    while (!IsNextRequest())
+                    // If request is sitting longer in the ratelimit queue than allowed cancel it.
+                    if (cts.IsCancellationRequested)
                     {
-                        // If request is sitting longer in the ratelimit queue than allowed cancel it.
-                        if (cts.IsCancellationRequested)
-                        {
-                            result.TimedOut = true;
-                            break;
-                        }
-
-                        await Task.Delay(5);
+                        result.TimedOut = true;
+                        break;
                     }
+
+                    await Task.Delay(5);
                 }
 
                 if (!result.TimedOut)
                 {
-                    TimeSpan? waiting = CheckIfRateLimitIsNeeded(type, settings);
+                    TimeSpan? waiting = await CheckIfRateLimitIsNeeded(type, settings);
+                    if (cts.IsCancellationRequested)
+                        result.TimedOut = true;
+
                     if (waiting != null)
                     {
-                        // If request is sitting longer in the ratelimit queue than allowed cancel it.
-                        if (Stopwatch.GetTimestamp() + waiting?.Ticks > Start + result.Timeout.Ticks)
+                        // Check if request isn't sitting longer than allowed in the ratelimit queue.
+                        if (Tools.Stopwatch.GetElapsedTime(Start) + waiting < result.Timeout)
+                        {
+                            try
+                            {
+                                await Task.Delay(waiting.Value, cts.Token);
+                            }
+                            catch (TaskCanceledException)
+                            {
+                                result.TimedOut = true;
+                            }
+                        }
+                        else // Otherwise cancel the request.
                             result.TimedOut = true;
-                        else
-                            await Task.Delay(waiting?.Milliseconds ?? 0);
                     }
                 }
             }
@@ -93,7 +103,7 @@ namespace DR.Networking.Core
             }
             finally
             {
-                History.Update(new HistoryData(History.Get(Id))
+                History.UpdateRequest(Id, new RequestHistory(History.GetRequest(Id))
                 {
                     Settings = settings,
                     Type = type,
@@ -150,12 +160,29 @@ namespace DR.Networking.Core
         /// Check if the current request is the first in the queue.
         /// </summary>
         /// <returns></returns>
-        private bool IsNextRequest()
+        private bool IsNextRequest(RateLimitType type, UrlRateLimit? settings)
         {
-            HistoryData? inProgress = History.Requests.FirstOrDefault(x => x.End == null);
+            RequestHistory? inProgress = History.Requests.FirstOrDefault(x =>
+            {
+                if (x.End != null)
+                    return false;
+
+                if (settings != null)
+                {
+                    if (settings.Uri == x.Url)
+                        return true;
+                    else
+                        return false;
+                }
+                else if (type == x.Type)
+                    return true;
+                else
+                    return false;
+            });
+
             if (inProgress != null)
             {
-                if (inProgress.Id == Id)
+                if (inProgress?.Id == Id)
                     return true;
                 else
                     return false;
@@ -170,10 +197,10 @@ namespace DR.Networking.Core
         /// <param name="type"></param>
         /// <param name="settings"></param>
         /// <returns></returns>
-        private static TimeSpan? CheckIfRateLimitIsNeeded(RateLimitType type, UrlRateLimit? settings)
+        private static async Task<TimeSpan?> CheckIfRateLimitIsNeeded(RateLimitType type, UrlRateLimit? settings)
         {
             TimeSpan? result = null;
-            HistoryData? previousRequest = null;
+            RequestHistory? previousRequest = null;
 
             switch (type)
             {
@@ -181,21 +208,21 @@ namespace DR.Networking.Core
                     if (settings != null)
                     {
                         previousRequest = History.Requests
-                            .LastOrDefault(x => x.Url == settings.Uri && x.End != null);
+                            .LastOrDefault(x => x.Url == settings.Uri && x.End != null && x.Finished);
                     }
                     break;
                 case RateLimitType.Domain:
                     if (settings != null)
                     {
                         previousRequest = History.Requests
-                            .LastOrDefault(x => x.Url?.Host == settings.Uri.Host && x.End != null);
+                            .LastOrDefault(x => x.Url?.Host == settings.Uri.Host && x.Settings != null && x.Settings.WholeDomain && x.End != null && x.Finished);
                     }
                     break;
                 case RateLimitType.Global:
                     if (Settings.GlobalDuration != null)
                     {
                         previousRequest = History.Requests
-                            .LastOrDefault(x => x.End != null);
+                            .LastOrDefault(x => x.End != null && x.Finished);
                     }
                     break;
             }
@@ -211,7 +238,7 @@ namespace DR.Networking.Core
                     if (settings != null)
                     {
                         TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.End ?? Stopwatch.GetTimestamp());
-                        if (timeBetween < settings.Duration)
+                        if (timeBetween <= settings.Duration)
                             result = settings.Duration.Subtract(timeBetween).RoundUp();
                     }
                     break;
@@ -219,7 +246,7 @@ namespace DR.Networking.Core
                     if (Settings.GlobalDuration != null)
                     {
                         TimeSpan timeBetween = Tools.Stopwatch.GetElapsedTime(previousRequest.End ?? Stopwatch.GetTimestamp());
-                        if (timeBetween < Settings.GlobalDuration)
+                        if (timeBetween <= Settings.GlobalDuration)
                             result = ((TimeSpan)Settings.GlobalDuration).Subtract(timeBetween).RoundUp();
                     }
                     break;

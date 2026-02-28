@@ -1,7 +1,6 @@
 ﻿using DR.Networking;
 using DR.Networking.Models;
-using System.Diagnostics;
-using System.Security.Cryptography;
+using System.Net;
 
 namespace Tests.Requests
 {
@@ -66,6 +65,14 @@ namespace Tests.Requests
                 },
             ];
 
+            string error = Core.RateLimitChecks.RemoveExistingRateLimits(urlRateLimits);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Assert.Fail(error);
+                return;
+
+            }
+
             bool added = DR.Networking.RateLimiting.Add(urlRateLimits);
             if (!added)
             {
@@ -73,7 +80,7 @@ namespace Tests.Requests
                 return;
             }
 
-            (_, TimeSpan average, _) = await SendRateLimitRequest(client.Name, limit);
+            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name);
             if (average < limit)
             {
                 Assert.Fail("The endpoint ratelimit duration average is shorter than expected");
@@ -118,6 +125,14 @@ namespace Tests.Requests
                 },
             ];
 
+            string error = Core.RateLimitChecks.RemoveExistingRateLimits(urlRateLimits);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Assert.Fail(error);
+                return;
+
+            }
+
             bool added = DR.Networking.RateLimiting.Add(urlRateLimits);
             if (!added)
             {
@@ -134,10 +149,79 @@ namespace Tests.Requests
                 "Get/RandomXml",
             ];
 
-            (_, TimeSpan average, _) = await SendRateLimitRequest(client.Name, limit, requestUris);
+            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name, requestUris);
             if (average < limit)
             {
                 Assert.Fail("The domain ratelimit duration average is shorter than expected");
+                return;
+            }
+
+            bool removed = DR.Networking.RateLimiting.Remove(urlRateLimits);
+            if (!removed)
+            {
+                Assert.Fail("Unable to remove ratelimit");
+                return;
+            }
+
+            Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The domain ratelimit duration average is shorter than expected");
+        }
+
+        [Test]
+        public static async Task DomainParallelRateLimiting()
+        {
+            NamedClient? client = DomainClient;
+            if (client == null || client.Client == null)
+            {
+                Assert.That(client, Is.Not.Null, "Client is null");
+                return;
+            }
+
+            string baseAddress = client.Client.BaseAddress?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(baseAddress))
+            {
+                Assert.That(baseAddress, Is.Not.Null, "Client is null");
+                return;
+            }
+
+            TimeSpan limit = TimeSpan.FromMilliseconds(115);
+            List<UrlRateLimit> urlRateLimits =
+            [
+                new UrlRateLimit()
+                {
+                    Duration = limit,
+                    Uri = new Uri($"{baseAddress}"),
+                    WholeDomain = true,
+                },
+            ];
+
+            string error = Core.RateLimitChecks.RemoveExistingRateLimits(urlRateLimits);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Assert.Fail(error);
+                return;
+
+            }
+
+            bool added = DR.Networking.RateLimiting.Add(urlRateLimits);
+            if (!added)
+            {
+                Assert.Fail("Unable to add ratelimit");
+                return;
+            }
+
+            List<string> requestUris =
+            [
+                "Get/RandomNumber",
+                "Get/RandomString",
+                "Get/RandomText",
+                "Get/RandomJson",
+                "Get/RandomXml",
+            ];
+
+            (_, TimeSpan average, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
+            if (average < limit)
+            {
+                Assert.Fail($"The domain ratelimit duration average is shorter than expected.\nExpected: '{limit}' but got '{average}' instead.");
                 return;
             }
 
@@ -171,7 +255,7 @@ namespace Tests.Requests
             TimeSpan limit = TimeSpan.FromMilliseconds(130);
             DR.Networking.RateLimiting.UpdateGlobal(limit);
 
-            (_, TimeSpan average, _) = await SendRateLimitRequest(client.Name, limit);
+            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name);
             if (average < limit)
             {
                 Assert.Fail("The global ratelimit duration average is shorter than expected");
@@ -182,36 +266,74 @@ namespace Tests.Requests
             Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The global ratelimit duration average is shorter than expected");
         }
 
-        private static async Task<(List<KeyValuePair<Result, TimeSpan>> Responses, TimeSpan Average, TimeSpan Shortest)> SendRateLimitRequest(string name, TimeSpan limit, List<string>? requestUris = null, int count = 15)
+        [Test]
+        public static async Task RateLimitController()
         {
-            Stopwatch timer = new();
-            List<KeyValuePair<Result, TimeSpan>> responses = [];
-
-            for (int i = 0; i < count; i++)
+            NamedClient? client = EndpointClient;
+            if (client == null || client.Client == null)
             {
-                if (i > 1)
-                    timer.Start();
-
-                Result response;
-                if (requestUris != null)
-                {
-                    int index = RandomNumberGenerator.GetInt32(0, requestUris.Count);
-                    response = await Request.Send(new(HttpMethod.Get, requestUris[index]), name);
-                }
-                else
-                    response = await Request.Send(new(HttpMethod.Get, "Get/RandomNumber"), name);
-
-                if (i > 1)
-                {
-                    responses.Add(new KeyValuePair<Result, TimeSpan>(response, timer.Elapsed));
-                    timer.Reset();
-                }
+                Assert.That(client, Is.Not.Null, "Client is null");
+                return;
             }
 
-            TimeSpan average = TimeSpan.FromMilliseconds(responses.Average(x => x.Value.TotalMilliseconds));
-            TimeSpan shortest = responses.Min(x => x.Value);
+            string baseAddress = client.Client.BaseAddress?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(baseAddress))
+            {
+                Assert.That(baseAddress, Is.Not.Null, "Client is null");
+                return;
+            }
 
-            return (responses, average, shortest);
+            TimeSpan limit = TimeSpan.FromMilliseconds(130);
+            List<UrlRateLimit> urlRateLimits =
+            [
+                new UrlRateLimit()
+                {
+                    Duration = limit,
+                    Uri = new Uri($"{baseAddress}/Ratelimit/Basic"),
+                    WholeDomain = false,
+                },
+            ];
+
+            string error = Core.RateLimitChecks.RemoveExistingRateLimits(urlRateLimits);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Assert.Fail(error);
+                return;
+
+            }
+
+            bool added = DR.Networking.RateLimiting.Add(urlRateLimits);
+            if (!added)
+            {
+                Assert.Fail("Unable to add ratelimit");
+                return;
+            }
+
+            List<string> requestUris =
+            [
+                "Ratelimit/Basic",
+            ];
+
+            List<HttpStatusCode> statusCodes = [];
+            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris, 150);
+
+            foreach (KeyValuePair<Result, TimeSpan> response in responses)
+                statusCodes.Add((HttpStatusCode)response.Key.StatusCode);
+
+            if (statusCodes.Any(x => x == HttpStatusCode.TooManyRequests || x != HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}' or didn't return '{HttpStatusCode.OK}'");
+                return;
+            }
+
+            bool removed = DR.Networking.RateLimiting.Remove(urlRateLimits);
+            if (!removed)
+            {
+                Assert.Fail("Unable to remove ratelimit");
+                return;
+            }
+
+            Assert.Pass();
         }
 
         [OneTimeTearDown]

@@ -131,5 +131,22 @@ namespace Tests.Core
 
             return (await editResponse.Content.ReadAsStringAsync(), string.Empty);
         }
+
+        public static async Task<(string Response, string Error)> GetUsersByEmail(List<string> emails)
+        {
+            HttpRequestMessage createRequest = new(HttpMethod.Query, $"Query/GetUsersByEmail")
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(emails), Encoding.UTF8, "application/json")
+            };
+
+            Result editResponse = await Request.Send(createRequest, Clients.GetClientNames().First());
+            if (editResponse == null || !editResponse.Success)
+                return (string.Empty, "Unable to get users by email");
+
+            if (editResponse.Content == null)
+                return (string.Empty, "Unable read get users by email response");
+
+            return (await editResponse.Content.ReadAsStringAsync(), string.Empty);
+        }
     }
 }

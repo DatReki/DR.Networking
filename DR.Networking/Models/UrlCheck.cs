@@ -2,9 +2,9 @@
 
 namespace DR.Networking.Models
 {
-    internal class CheckUrlModel
+    internal class UrlCheck
     {
-        public CheckUrlModel()
+        internal UrlCheck()
         {
             Success = false;
             Url = new Uri("about:blank");
@@ -12,7 +12,7 @@ namespace DR.Networking.Models
             ErrorType = 0;
         }
 
-        public CheckUrlModel(bool? success, Uri? url, string? error, ErrorType? type)
+        internal UrlCheck(bool? success, Uri? url, string? error, ErrorType? type)
         {
             Success = success ?? false;
             Url = url ?? new Uri("about:blank");
@@ -20,10 +20,24 @@ namespace DR.Networking.Models
             ErrorType = type ?? 0;
         }
 
+        internal UrlCheck(UrlCheck original)
+        {
+            Success = original.Success;
+            FromHistory = original.FromHistory;
+            Url = original.Url;
+            Error = original.Error;
+            ErrorType = original.ErrorType;
+        }
+
         /// <summary>
         /// Indicates if the provided URL was valid or not.
         /// </summary>
         internal bool Success { get; set; }
+
+        /// <summary>
+        /// If the URL was found in the <see cref="Core.History.Urls"/> list this will be true, otherwise it will be false.
+        /// </summary>
+        internal bool FromHistory { get; set; } = false;
 
         /// <summary>
         /// The resulting Uri if <see cref="Success"/> is true.
