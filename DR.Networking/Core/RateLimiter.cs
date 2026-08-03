@@ -53,12 +53,21 @@ namespace DR.Networking.Core
                 return result;
             else if (!GlobalRateLimiting && !UrlRateLimiting)
                 return result;
-
             if (!IsRateLimitUrl(url, out RateLimitType type, out UrlRateLimit? settings))
                 return result;
 
             try
             {
+                try
+                {
+                    History.UpdateRequest(Id, new RequestHistory(History.GetRequest(Id))
+                    {
+                        Settings = settings,
+                        Type = type,
+                    });
+                }
+                catch { }
+
                 using CancellationTokenSource cts = new(result.Timeout);
                 while (!IsNextRequest(type, settings))
                 {
@@ -69,6 +78,7 @@ namespace DR.Networking.Core
                         break;
                     }
 
+                    // waiting for turn
                     await Task.Delay(5);
                 }
 
@@ -169,10 +179,21 @@ namespace DR.Networking.Core
 
                 if (settings != null)
                 {
-                    if (settings.Uri == x.Url)
-                        return true;
+                    // If this settings applies to the whole domain compare hosts, otherwise compare the full Uri
+                    if (settings.WholeDomain)
+                    {
+                        if (x.Url?.Host == settings.Uri.Host)
+                            return true;
+                        else
+                            return false;
+                    }
                     else
-                        return false;
+                    {
+                        if (settings.Uri == x.Url)
+                            return true;
+                        else
+                            return false;
+                    }
                 }
                 else if (type == x.Type)
                     return true;
@@ -182,12 +203,15 @@ namespace DR.Networking.Core
 
             if (inProgress != null)
             {
+                // in-progress found
+
                 if (inProgress?.Id == Id)
                     return true;
                 else
                     return false;
             }
 
+            // no in-progress found
             return true;
         }
 

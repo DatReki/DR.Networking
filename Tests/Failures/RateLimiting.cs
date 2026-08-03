@@ -99,7 +99,7 @@ namespace Tests.Failures
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(99);
+            TimeSpan limit = TimeSpan.FromMilliseconds(95);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
