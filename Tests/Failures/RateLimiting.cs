@@ -1,4 +1,5 @@
-﻿using DR.Networking;
+﻿using Backend.Core;
+using DR.Networking;
 using DR.Networking.Models;
 using System.Net;
 
@@ -91,7 +92,7 @@ namespace Tests.Failures
                 return;
             }
 
-            string baseAddress = client.Client.BaseAddress?.ToString() ?? string.Empty;
+            string baseAddress = client.GetBaseAddress();
             if (string.IsNullOrWhiteSpace(baseAddress))
             {
                 Assert.That(baseAddress, Is.Not.Null, "Client is null");
