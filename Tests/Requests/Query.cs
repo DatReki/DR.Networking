@@ -6,6 +6,12 @@ namespace Tests.Requests
     [TestFixture]
     public class Query
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task GetUsersByEmail()
         {
@@ -81,6 +87,12 @@ namespace Tests.Requests
             }
 
             Assert.Pass();
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
         }
     }
 }

@@ -9,6 +9,12 @@ namespace Tests.Requests
     [TestFixture]
     public class Get
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task NamedClient()
         {
@@ -162,10 +168,8 @@ namespace Tests.Requests
                 "Get/RandomXml",
             ];
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(100);
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(Clients.GetClientNames().First(), requestUris);
-
-            if (responses.Any(x => !x.Key.Success))
+            List<Result> result = await Core.MultipleRequests.SendParallelRequests(Clients.GetClientNames().First(), requestUris);
+            if (result.Any(x => !x.Success))
                 Assert.Fail("One or more parallel get requests failed");
             else
                 Assert.Pass();
@@ -183,13 +187,17 @@ namespace Tests.Requests
                 "Get/RandomXml",
             ];
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(100);
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendLoopedRequest(Clients.GetClientNames().First(), requestUris);
-
-            if (responses.Any(x => !x.Key.Success))
+            List<Result> result = await Core.MultipleRequests.SendLoopedRequest(Clients.GetClientNames().First(), requestUris);
+            if (result.Any(x => !x.Success))
                 Assert.Fail("One or more looped get requests failed");
             else
                 Assert.Pass();
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
         }
     }
 }

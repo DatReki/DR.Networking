@@ -54,12 +54,11 @@ namespace Tests.Requests
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(100);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
                 {
-                    Duration = limit,
+                    Duration = Main.RateLimitDuration,
                     Uri = new Uri($"{baseAddress}/Get/RandomNumber"),
                     WholeDomain = false,
                 },
@@ -80,10 +79,15 @@ namespace Tests.Requests
                 return;
             }
 
-            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name);
-            if (average < limit)
+            List<Result> result = await Core.MultipleRequests.SendLoopedRequest(client.Name);
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail("The endpoint ratelimit duration average is shorter than expected");
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                return;
+            }
+            else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests didn't return '{HttpStatusCode.OK}'");
                 return;
             }
 
@@ -94,7 +98,7 @@ namespace Tests.Requests
                 return;
             }
 
-            Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The endpoint ratelimit duration average is shorter than expected");
+            Assert.Pass();
         }
 
         [Test]
@@ -114,12 +118,11 @@ namespace Tests.Requests
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(115);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
                 {
-                    Duration = limit,
+                    Duration = Main.RateLimitDuration,
                     Uri = new Uri($"{baseAddress}"),
                     WholeDomain = true,
                 },
@@ -149,10 +152,15 @@ namespace Tests.Requests
                 "Get/RandomXml",
             ];
 
-            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name, requestUris);
-            if (average < limit)
+            List<Result> result = await Core.MultipleRequests.SendLoopedRequest(client.Name, requestUris);
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail("The domain ratelimit duration average is shorter than expected");
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                return;
+            }
+            else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests didn't return '{HttpStatusCode.OK}'");
                 return;
             }
 
@@ -163,7 +171,7 @@ namespace Tests.Requests
                 return;
             }
 
-            Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The domain ratelimit duration average is shorter than expected");
+            Assert.Pass();
         }
 
         [Test]
@@ -183,12 +191,11 @@ namespace Tests.Requests
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(115);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
                 {
-                    Duration = limit,
+                    Duration = Main.RateLimitDuration,
                     Uri = new Uri($"{baseAddress}"),
                     WholeDomain = true,
                 },
@@ -218,10 +225,15 @@ namespace Tests.Requests
                 "Get/RandomXml",
             ];
 
-            (_, TimeSpan average, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
-            if (average < limit)
+            List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail($"The domain ratelimit duration average is shorter than expected.\nExpected: '{limit}' but got '{average}' instead.");
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                return;
+            }
+            else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests didn't return '{HttpStatusCode.OK}'");
                 return;
             }
 
@@ -232,7 +244,7 @@ namespace Tests.Requests
                 return;
             }
 
-            Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The domain ratelimit duration average is shorter than expected");
+            Assert.Pass();
         }
 
         [Test]
@@ -252,18 +264,22 @@ namespace Tests.Requests
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(130);
-            DR.Networking.RateLimiting.UpdateGlobal(limit);
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+            List<Result> result = await Core.MultipleRequests.SendLoopedRequest(client.Name);
 
-            (_, TimeSpan average, _) = await Core.MultipleRequests.SendLoopedRequest(client.Name);
-            if (average < limit)
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail("The global ratelimit duration average is shorter than expected");
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                return;
+            }
+            else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests didn't return '{HttpStatusCode.OK}'");
                 return;
             }
 
             DR.Networking.RateLimiting.UpdateGlobal(null);
-            Assert.That(average, Is.GreaterThanOrEqualTo(limit), "The global ratelimit duration average is shorter than expected");
+            Assert.Pass();
         }
 
         [Test]
@@ -283,12 +299,11 @@ namespace Tests.Requests
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(130);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
                 {
-                    Duration = limit,
+                    Duration = Main.RateLimitDuration,
                     Uri = new Uri($"{baseAddress}/Ratelimit/Basic"),
                     WholeDomain = false,
                 },
@@ -314,15 +329,15 @@ namespace Tests.Requests
                 "Ratelimit/Basic",
             ];
 
-            List<HttpStatusCode> statusCodes = [];
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris, 150);
-
-            foreach (KeyValuePair<Result, TimeSpan> response in responses)
-                statusCodes.Add((HttpStatusCode)response.Key.StatusCode);
-
-            if (statusCodes.Any(x => x == HttpStatusCode.TooManyRequests || x != HttpStatusCode.OK))
+            List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris, 150);
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}' or didn't return '{HttpStatusCode.OK}'");
+                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                return;
+            }
+            else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
+            {
+                Assert.Fail($"One or more requests didn't return '{HttpStatusCode.OK}'");
                 return;
             }
 

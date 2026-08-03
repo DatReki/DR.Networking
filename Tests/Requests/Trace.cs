@@ -6,6 +6,12 @@ namespace Tests.Requests
     [TestFixture]
     public class Trace
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task TraceExample()
         {
@@ -17,6 +23,12 @@ namespace Tests.Requests
                 Assert.That(response, Is.Not.Null, "TRACE request is empty");
                 Assert.That(response.Success, Is.True, "Unable to send TRACE request");
             }
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
         }
     }
 }

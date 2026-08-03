@@ -6,6 +6,12 @@ namespace Tests.Failures
     [TestFixture]
     public class General
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task EmptyUrl()
         {
@@ -61,6 +67,12 @@ namespace Tests.Failures
                 Assert.That(response.Success, Is.Not.True);
                 Assert.That(response.ErrorType, Is.EqualTo(ErrorType.InvalidDomain), $"Returned error type '{response.ErrorType}' while '{ErrorType.InvalidDomain}' was expected.");
             }
-        }        
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
+        }
     }
 }

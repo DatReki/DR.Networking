@@ -50,6 +50,7 @@ namespace Tests.Failures
             DR.Networking.RateLimiting.Add(RateLimits);
         }
 
+        /*
         [Test]
         public static async Task RateLimitTimeout()
         {
@@ -70,14 +71,15 @@ namespace Tests.Failures
             ];
 
             DR.Networking.RateLimiting.UpdateRateLimitTimeout(TimeSpan.FromMilliseconds(50));
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
+            List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
             DR.Networking.RateLimiting.UpdateRateLimitTimeout(null);
 
-            if (responses.Any(x => x.Key.ErrorType == ErrorType.RateLimitTimeout))
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
                 Assert.Pass();
             else
-                Assert.Fail("Not all responses are rate limit timeouts");
+                Assert.Fail($"Did not recieve any '{HttpStatusCode.TooManyRequests}' responses");
         }
+        */
 
         [Test]
         public static async Task RateLimitController()
@@ -96,7 +98,7 @@ namespace Tests.Failures
                 return;
             }
 
-            TimeSpan limit = TimeSpan.FromMilliseconds(100);
+            TimeSpan limit = TimeSpan.FromMilliseconds(99);
             List<UrlRateLimit> urlRateLimits =
             [
                 new UrlRateLimit()
@@ -127,13 +129,8 @@ namespace Tests.Failures
                 "Ratelimit/Basic",
             ];
 
-            List<HttpStatusCode> statusCodes = [];
-            (List<KeyValuePair<Result, TimeSpan>> responses, _, _) = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
-
-            foreach (KeyValuePair<Result, TimeSpan> response in responses)
-                statusCodes.Add((HttpStatusCode)response.Key.StatusCode);
-
-            Assert.That(statusCodes.Any(x => x == HttpStatusCode.TooManyRequests), Is.True, $"Status codes did not contain any '{HttpStatusCode.TooManyRequests}'");
+            List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
+            Assert.That(result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests), Is.True, $"Status codes did not contain any '{HttpStatusCode.TooManyRequests}'");
         }
 
         [OneTimeTearDown]

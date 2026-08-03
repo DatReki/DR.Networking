@@ -6,6 +6,12 @@ namespace Tests.Requests
     [TestFixture]
     public class Put
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task CheckUser()
         {
@@ -26,6 +32,12 @@ namespace Tests.Requests
             }
 
             Assert.That(foundUser.Compare(user), Is.True, "Unable to find the created user");
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
         }
     }
 }

@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Threading.RateLimiting;
 
 namespace Api
 {
@@ -22,19 +20,6 @@ namespace Api
                 options.KnownProxies.Clear();
             });
 
-            builder.Services.AddRateLimiter(options =>
-            {
-                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                options.AddFixedWindowLimiter("ratelimit", opt =>
-                {
-                    opt.AutoReplenishment = true;
-                    opt.PermitLimit = 1;
-                    opt.QueueLimit = 0;
-                    opt.Window = TimeSpan.FromMilliseconds(115);
-                    opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                });
-            });
-
             WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -49,8 +34,11 @@ namespace Api
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseRateLimiter();
             app.UseAuthorization();
+
+            // Use custom rate limiting middleware to limit requests to 1 request every 100 milliseconds instead of using the built-in "app.UseRateLimiter();" option.
+            // This is done to get more accurate results.
+            app.UseMiddleware<Core.Middleware.RateLimiter>(TimeSpan.FromMilliseconds(100), 1);
 
             app.MapControllerRoute(
                 name: "default",

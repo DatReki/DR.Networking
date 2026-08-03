@@ -6,6 +6,12 @@ namespace Tests.Requests
     [TestFixture]
     public class Patch
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(Main.RateLimitDuration);
+        }
+
         [Test]
         public async Task EditUser()
         {
@@ -51,6 +57,12 @@ namespace Tests.Requests
             }
 
             Assert.That($"User updated '{changedUser.Username}'", Is.EqualTo(changedResponse));
+        }
+
+        [OneTimeTearDown]
+        public async Task TearDown()
+        {
+            DR.Networking.RateLimiting.UpdateGlobal(null);
         }
     }
 }
