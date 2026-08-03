@@ -133,7 +133,7 @@ namespace Tests.Requests
         [Test]
         public async Task CompareIpv6()
         {
-            IPAddress ? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
+            IPAddress? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
             if (address == null)
             {
                 Assert.Fail("Could not get IPv6 address");
@@ -169,8 +169,10 @@ namespace Tests.Requests
             ];
 
             List<Result> result = await Core.MultipleRequests.SendParallelRequests(Clients.GetClientNames().First(), requestUris);
-            if (result.Any(x => !x.Success))
-                Assert.Fail("One or more parallel get requests failed");
+            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
+                Assert.Fail($"One or more requests returned '{HttpStatusCode.TooManyRequests}'");
+            else if (result.Any(x => !x.Success))
+                Assert.Fail($"One or more parallel '{HttpMethod.Get}' requests failed");
             else
                 Assert.Pass();
         }
@@ -189,7 +191,7 @@ namespace Tests.Requests
 
             List<Result> result = await Core.MultipleRequests.SendLoopedRequest(Clients.GetClientNames().First(), requestUris);
             if (result.Any(x => !x.Success))
-                Assert.Fail("One or more looped get requests failed");
+                Assert.Fail($"One or more looped '{HttpMethod.Get}' requests failed");
             else
                 Assert.Pass();
         }

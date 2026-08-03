@@ -229,7 +229,7 @@ namespace Tests.Requests
             List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
             if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
             {
-                Assert.Fail($"One or more requests either returned '{HttpStatusCode.TooManyRequests}'");
+                Assert.Fail($"One or more requests returned '{HttpStatusCode.TooManyRequests}'");
                 return;
             }
             else if (result.Any(x => x.StatusCode != (int)HttpStatusCode.OK))
