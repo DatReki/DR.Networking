@@ -13,7 +13,7 @@ namespace Tests
 
         internal static readonly bool UseHttps = true;
 
-        internal static readonly TimeSpan RateLimitDuration = TimeSpan.FromMilliseconds(101);
+        internal static readonly TimeSpan RateLimitDuration = TimeSpan.FromMilliseconds(105);
 
         [OneTimeSetUp]
         public async Task Setup()

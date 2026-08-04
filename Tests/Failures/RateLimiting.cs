@@ -51,7 +51,6 @@ namespace Tests.Failures
             DR.Networking.RateLimiting.Add(RateLimits);
         }
 
-        /*
         [Test]
         public static async Task RateLimitTimeout()
         {
@@ -75,12 +74,11 @@ namespace Tests.Failures
             List<Result> result = await Core.MultipleRequests.SendParallelRequests(client.Name, requestUris);
             DR.Networking.RateLimiting.UpdateRateLimitTimeout(null);
 
-            if (result.Any(x => x.StatusCode == (int)HttpStatusCode.TooManyRequests))
+            if (result.Any(x => x.ErrorType == ErrorType.RateLimitTimeout))
                 Assert.Pass();
             else
-                Assert.Fail($"Did not recieve any '{HttpStatusCode.TooManyRequests}' responses");
+                Assert.Fail($"Did not recieve any results containing '{ErrorType.RateLimitTimeout}'");
         }
-        */
 
         [Test]
         public static async Task RateLimitController()
