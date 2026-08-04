@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Xml.Linq;
 
 namespace Backend
@@ -79,6 +81,18 @@ namespace Backend
                 output = string.Empty;
 
             return result;
+        }
+
+        public static bool Ipv6Available()
+        {
+            if (!Socket.OSSupportsIPv6)
+                return false;
+
+            IEnumerable<NetworkInterface> supportedInterfaces = NetworkInterface.GetAllNetworkInterfaces().Where(x => x.Supports(NetworkInterfaceComponent.IPv6));
+            if (supportedInterfaces.Any())
+                return supportedInterfaces.Any(x => x.GetIPProperties().GetIPv6Properties().Index > 0);
+
+            return false;
         }
     }
 }

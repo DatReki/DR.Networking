@@ -1,4 +1,5 @@
-﻿using DR.Networking;
+﻿using Backend;
+using DR.Networking;
 using DR.Networking.Models;
 using Intermediate;
 using System.Net;
@@ -74,6 +75,12 @@ namespace Tests.Requests
         [Test]
         public async Task ValidIpv6()
         {
+            if (!Tools.Ipv6Available())
+            {
+                Assert.Ignore("IPv6 is not available");
+                return;
+            }
+
             HttpRequestMessage request = new(HttpMethod.Get, $"[0:0:0:0:0:0:0:1]:{InternalApi.UsedPorts.Last()}/Get");
             Result response = await Request.Send(request, "ip-testing");
 
@@ -92,6 +99,12 @@ namespace Tests.Requests
         [Test]
         public async Task ValidUrlIpv6()
         {
+            if (!Tools.Ipv6Available())
+            {
+                Assert.Ignore("IPv6 is not available");
+                return;
+            }
+
             // Check if you provide a valid RequestUri & BaseAddress if the library will use just the RequestUri instead of adding the BaseAddress & RequestUri together.
             // Because if it adds the BaseAddress & RequestUri together this will create a url that doesn't exist on the API.
             HttpRequestMessage request = new(HttpMethod.Get, $"https://[0:0:0:0:0:0:0:1]:{InternalApi.UsedPorts.Last()}/Get");
@@ -133,6 +146,12 @@ namespace Tests.Requests
         [Test]
         public async Task CompareIpv6()
         {
+            if (!Tools.Ipv6Available())
+            {
+                Assert.Ignore("IPv6 is not available");
+                return;
+            }
+
             IPAddress? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
             if (address == null)
             {
