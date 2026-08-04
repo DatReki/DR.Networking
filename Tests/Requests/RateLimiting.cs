@@ -39,6 +39,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public static async Task EndpointRateLimiting()
         {
             NamedClient? client = EndpointClient;
@@ -103,6 +104,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public static async Task DomainRateLimiting()
         {
             NamedClient? client = DomainClient;
@@ -249,6 +251,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public static async Task GlobalRateLimiting()
         {
             NamedClient? client = GlobalClient;

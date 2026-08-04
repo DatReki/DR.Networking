@@ -7,7 +7,7 @@ namespace Tests.Core
 {
     internal class MultipleRequests
     {
-        internal static async Task<List<Result>> SendLoopedRequest(string name, List<string>? requestUris = null, int count = 15, int minDelay = 200)
+        internal static async Task<List<Result>> SendLoopedRequest(string name, List<string>? requestUris = null, int count = 15)
         {
             List<Result> responses = [];
 

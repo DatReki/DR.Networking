@@ -4,6 +4,7 @@ using DR.Networking.Models;
 namespace Tests.Failures
 {
     [TestFixture]
+    [NonParallelizable]
     public class General
     {
         [OneTimeSetUp]

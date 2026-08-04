@@ -17,6 +17,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task NamedClient()
         {
             HttpRequestMessage request = new(HttpMethod.Get, "Get");
@@ -35,6 +36,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task ValidIpv4()
         {
             HttpRequestMessage request = new(HttpMethod.Get, $"127.0.0.1:{InternalApi.UsedPorts.Last()}/Get");
@@ -53,6 +55,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task ValidUrlIpv4()
         {
             // Check if you provide a valid RequestUri & BaseAddress if the library will use just the RequestUri instead of adding the BaseAddress & RequestUri together.
@@ -73,6 +76,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task ValidIpv6()
         {
             if (!Tools.Ipv6Available())
@@ -97,6 +101,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task ValidUrlIpv6()
         {
             if (!Tools.Ipv6Available())
@@ -123,6 +128,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task CompareIpv4()
         {
             IPAddress? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
@@ -144,6 +150,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public async Task CompareIpv6()
         {
             if (!Tools.TryGetIpv6(out IPAddress? address) || address == null)
@@ -190,6 +197,7 @@ namespace Tests.Requests
         }
 
         [Test]
+        [NonParallelizable]
         public static async Task LoopedRequests()
         {
             List<string> requestUris =

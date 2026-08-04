@@ -4,6 +4,7 @@ using DR.Networking.Models;
 namespace Tests.Requests
 {
     [TestFixture]
+    [NonParallelizable]
     public class Options
     {
         [OneTimeSetUp]

@@ -5,6 +5,7 @@ using System.Web;
 namespace Tests.Requests
 {
     [TestFixture]
+    [NonParallelizable]
     public class Post
     {
         [OneTimeSetUp]
