@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Xml.Linq;
@@ -93,6 +94,19 @@ namespace Backend
                 return supportedInterfaces.Any(x => x.GetIPProperties().GetIPv6Properties().Index > 0);
 
             return false;
+        }
+
+        public static bool TryGetIpv6(out IPAddress? ip)
+        {
+            ip = null;
+            if (!Ipv6Available())
+                return false;
+
+            ip = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
+            if (ip == null)
+                return false;
+
+            return true;
         }
     }
 }

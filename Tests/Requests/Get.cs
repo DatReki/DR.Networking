@@ -146,16 +146,9 @@ namespace Tests.Requests
         [Test]
         public async Task CompareIpv6()
         {
-            if (!Tools.Ipv6Available())
+            if (!Tools.TryGetIpv6(out IPAddress? address) || address == null)
             {
-                Assert.Ignore("IPv6 is not available");
-                return;
-            }
-
-            IPAddress? address = Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ScopeId == 0);
-            if (address == null)
-            {
-                Assert.Fail("Could not get IPv6 address");
+                Assert.Ignore("Either IPv6 is not available or could not get IPv6 address");
                 return;
             }
 
